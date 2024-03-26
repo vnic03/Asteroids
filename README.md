@@ -62,6 +62,20 @@ Controller, offering a flexible arcade experience.
 
 ## Running the Game
 
+### Linux
+
+The game is available for download as a ready-to-play package for Linux users. 
+You can find the latest release [here](https://github.com/vnic03/Asteroids/releases/tag/v1.0.0). 
+Download the appropriate file for your system:
+
+- `Asteroids-1.0.0-Linux.sh` for a shell script installer.
+- `Asteroids-1.0.0-Linux.tar.gz` for a gzipped tar archive.
+- `Asteroids-1.0.0-Linux.tar.Z` for a compressed tar archive.
+
+Follow the installation instructions in the release notes to install and start playing "Asteroids"!
+
+## Others
+
 Clone the repository and build the game using CMake. Ensure you have the SFML library installed on your system.
 
 ```bash
@@ -73,7 +87,7 @@ make
 ./Asteroids
 ```
 
-*Will be a downloadable game soon!*
+*Will be a downloadable for windows and mac soon!*
 
 ### Note
 

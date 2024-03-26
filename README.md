@@ -6,6 +6,16 @@ of dodging and shooting asteroids in space and avoiding alien UFOs!
 
 ![Start Screen](assets/gameplay/start-screen.png)
 
+### Choose Your Name
+Before starting the game, you can now enter a name or select an 
+existing one from the list.
+
+![Choose Name Screen](assets/gameplay/choose-name.png)
+*Choose your name and make it to the top of the leaderboard!*
+
+### Highscores
+Compete against yourself or friends by beating highscores! Each name has 
+its own highscore, making it fun to try and top the leaderboard.
 
 ## Gameplay 
 
@@ -43,6 +53,12 @@ Controller, offering a flexible arcade experience.
 - **Left Stick:** Rotate the spaceship
 - **X Button:** Shoot
 - **R2 Button:** Accelerate the spaceship
+
+### Choosing/Creating a Name:
+
+- **Arrow Keys:** Navigate through the existing names list.
+- **Enter:** Select the highlighted name to start the game.
+- **Alt:** Save a new name to the list (after typing it).
 
 ## Running the Game
 

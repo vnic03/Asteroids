@@ -61,16 +61,26 @@ std::string chooseName(sf::RenderWindow &window, const sf::Font &font) {
     instruction.setPosition(100, 50);
 
     sf::Text nameInput("", font, 20);
-    nameInput.setFillColor(sf::Color::Green);
+    nameInput.setFillColor(sf::Color(191, 64, 191));
     nameInput.setPosition(100, 100);
 
     sf::Text existingNames("", font, 20);
     existingNames.setFillColor(sf::Color::White);
     existingNames.setPosition(100, 150);
 
-    sf::RectangleShape highlight(sf::Vector2f(400, 24));
-    highlight.setFillColor(sf::Color(50, 50, 50)); // zu coolen green change
+    sf::RectangleShape highlight;
+    int width = 0;
+    highlight.setFillColor(sf::Color(128, 0, 128));
     highlight.setPosition(90, 150);
+
+    for (const auto& score : scores) {
+        sf::Text tempText(score.name + " - Highscore: " + std::to_string(score.score), font, 20);
+        float textWidth = tempText.getLocalBounds().width;
+        if (textWidth > width) {
+            width = textWidth;
+        }
+    }
+    highlight.setSize(sf::Vector2f(width + 50, 24));
 
     std::string playerNameInput;
     bool nameEntered = false;
@@ -88,7 +98,8 @@ std::string chooseName(sf::RenderWindow &window, const sf::Font &font) {
                     nameInput.setString(playerNameInput);
                     nameEntered = true;
 
-                } else if (event.text.unicode == 8 && !playerNameInput.empty()) {
+                } else if (event.text.unicode == 8 &&
+                           !playerNameInput.empty()) {
                     playerNameInput.pop_back();
                     nameInput.setString(playerNameInput);
                     nameEntered = !playerNameInput.empty();
@@ -97,73 +108,77 @@ std::string chooseName(sf::RenderWindow &window, const sf::Font &font) {
             if (event.type == sf::Event::KeyPressed) {
                 if (event.key.code == sf::Keyboard::Down) {
                     selectIndex =
-                            std::min(selectIndex + 1, (int)scores.size() - (nameEntered ? 0 : 1));
+                            std::min(selectIndex + 1, (int) scores.size() -
+                                                      (nameEntered ? 0 : 1));
 
                 } else if (event.key.code == sf::Keyboard::Up) {
                     selectIndex = std::max(selectIndex - 1, -1);
 
-                }  else if (event.key.code == sf::Keyboard::Delete) {
+                } else if (event.key.code == sf::Keyboard::Delete) {
                     removePlayer(scores, scores[selectIndex].name);
                     selectIndex = std::max(0, selectIndex - 1);
                     scores = readHighScores();
 
-                } else if (event.key.code == sf::Keyboard::Enter) {
+                    // saves the name
+                } else if (event.key.code == sf::Keyboard::LAlt ||
+                            event.key.code == sf::Keyboard::RAlt) {
                     if (!playerNameInput.empty() && nameEntered) {
-
                         auto it = std::find_if(scores.begin(), scores.end(),
-                                               [&](const Score& s) {
-                                                   return s.name == playerNameInput;
+                                               [&](const Score &s) {
+                                                   return s.name ==
+                                                          playerNameInput;
                                                });
                         if (it == scores.end()) {
                             writeHighScore(playerNameInput, 0);
                             scores.push_back({playerNameInput, 0});
-                            selectIndex = scores.size() - 1;
+                            playerNameInput.clear();
+                            nameInput.setString("");
+                            nameEntered = false;
+                            scores = readHighScores();
                         }
-                        nameEntered = false;
-                        playerNameInput.clear();
-                        nameInput.setString(playerNameInput);
-
-                    } else if (selectIndex >= 0 && selectIndex < scores.size()) {
-                        playerNameInput = scores[selectIndex].name;
+                    }
+                } else if (event.key.code == sf::Keyboard::Enter) {
+                    if (selectIndex >= 0 && selectIndex < scores.size()) {
                         return scores[selectIndex].name;
                     }
                 }
             }
-        }
-        window.clear();
-        std::string existingNamesText;
 
-        existingNamesText.clear();
-        for (size_t i = 0; i < scores.size(); ++i) {
-            if (i == selectIndex) {
-                existingNamesText += "> ";
+            window.clear();
+            std::string existingNamesText;
+
+            existingNamesText.clear();
+            for (size_t i = 0; i < scores.size(); i++) {
+                if (i == selectIndex) {
+                    existingNamesText += "> ";
+                }
+                existingNamesText +=
+                        scores[i].name + " - Highscore: " +
+                        std::to_string(scores[i].score) + "\n";
             }
-            existingNamesText +=
-                    scores[i].name + " - Score: " +
-                    std::to_string(scores[i].score) + "\n";
-        }
-        existingNames.setString(existingNamesText);
+            existingNames.setString(existingNamesText);
 
-        window.draw(instruction);
-        window.draw(nameInput);
+            window.draw(instruction);
+            window.draw(nameInput);
 
-        std::istringstream iss(existingNamesText);
-        std::string line;
-        size_t i = 0;
-        while (std::getline(iss, line)) {
-            sf::Text textLine(line, font, 20);
-            textLine.setFillColor(sf::Color::White);
-            textLine.setPosition(100, 150 + i * 24);
+            std::istringstream iss(existingNamesText);
+            std::string line;
+            size_t i = 0;
+            while (std::getline(iss, line)) {
+                sf::Text textLine(line, font, 20);
+                textLine.setFillColor(sf::Color::White);
+                textLine.setPosition(100, 150 + i * 24);
 
-            if (i == selectIndex) {
-                highlight.setPosition(90, 150 + i * 24);
-                window.draw(highlight);
+                if (i == selectIndex) {
+                    highlight.setPosition(90, 150 + i * 24);
+                    window.draw(highlight);
+                }
+                window.draw(textLine);
+                i++;
             }
-            window.draw(textLine);
-            i++;
-        }
 
-        window.display();
+            window.display();
+        }
     }
     return "";
 }

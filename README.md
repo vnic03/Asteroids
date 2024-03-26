@@ -10,7 +10,7 @@ of dodging and shooting asteroids in space and avoiding alien UFOs!
 Before starting the game, you can now enter a name or select an 
 existing one from the list.
 
-![Choose Name Screen](assets/gameplay/choose-name.png)
+![Choose Name](assets/gameplay/choose-name.png)
 *Choose your name and make it to the top of the leaderboard!*
 
 ### Highscores

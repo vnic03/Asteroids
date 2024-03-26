@@ -54,6 +54,10 @@ bool startScreen(sf::RenderWindow &window, const sf::Font &font) {
 
 std::string chooseName(sf::RenderWindow &window, const sf::Font &font) {
     std::vector<Score> scores = readHighScores();
+    std::sort(scores.begin(), scores.end(), [](const Score& a, const Score& b) {
+        return a.score > b.score;
+    });
+
     int selectIndex = -1; // start with nobody
 
     sf::Text instruction("Enter name or select existing:", font, 20);

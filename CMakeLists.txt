@@ -14,6 +14,8 @@ add_executable(Asteroids main.cpp
         alien/Alien.cpp                 # Implementation for alien entities
         alien/Alien.h                   # Header for alien entities
         MovableEntity.h                 # Base abstract class for spaceship and alien
+        scenes/Scenes.h                 # Manages the logic and design of the scenes
+        scenes/Scenes.cpp               # Implementation for logic and design
         )
 
 # SFML

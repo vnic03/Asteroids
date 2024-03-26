@@ -4,6 +4,7 @@
 
 #include "GameConstants.h"
 #include "logic/logic.h"
+#include "scenes/Scenes.h"
 
 // Game-Sounds
 sf::SoundBuffer bBeat1, bBeat2, bSmallEx, bMediumEx, bBigEx, bFire, bThrust, bEx,
@@ -39,11 +40,10 @@ void playBeat(sf::Sound& beat1, sf::Sound& beat2) {
     playFirst = !playFirst;
 }
 
-// Main function to run the game
+// Main function
 int main() {
     // Window
-    std::string name = "Asteroids";
-    sf::RenderWindow window(sf::VideoMode(SIZE_X, SIZE_Y), name);
+    sf::RenderWindow window(sf::VideoMode(SIZE_X, SIZE_Y), "Asteroids");
     window.setFramerateLimit(60);
 
     // Retro-Arcade-Font
@@ -71,6 +71,7 @@ int main() {
     // Game-Loop
     GameState state = GameState::START_SCREEN;
     int score = 0;
+    std::string player;
 
     while (window.isOpen()) {
         sf::Event event{ };
@@ -79,16 +80,25 @@ int main() {
         }
         switch (state) {
             case GameState::START_SCREEN:
-                if (startScreen(window, font)) state = GameState::RUNNING;
+                if (startScreen(window, font)) state = GameState::CHOOSE_NAME;
                 else window.close();
+                break;
+            case GameState::CHOOSE_NAME:
+            {
+                std::string name = chooseName(window, font);
+                if (!name.empty()) {
+                    player = name; state = GameState::RUNNING;
+                } else return 0;
+            }
                 break;
             case GameState::RUNNING:
                 score = runGame(window, font, state);
                 state = GameState::GAME_OVER;
                 break;
             case GameState::GAME_OVER:
-                gameOver(window, score, font, state);
-                state = GameState::START_SCREEN;
+                sAlienS.stop(); sAlienB.stop();
+                gameOver(window, score, font, state, player);
+                state = GameState::CHOOSE_NAME;
                 break;
         }
     }

@@ -2,19 +2,16 @@
 #define ASTEROIDS_LOGIC_H
 
 #include <SFML/Graphics.hpp>
+#include <cmath>
+#include <SFML/Graphics/Shape.hpp>
+#include <sstream>
+
 #include "../Asteroid.h"
 #include "../spaceship/Spaceship.h"
 #include "../alien/Alien.h"
 
-// Displays the start screen and waits for user input to start the game
-bool startScreen(sf::RenderWindow &window, const sf::Font &font);
-
 // Main game loop: handles game logic, rendering, and user input
 int runGame(sf::RenderWindow &window, const sf::Font& font, GameState& state);
-
-// Displays the game over screen, showing the final score and a prompt to play again
-void gameOver(sf::RenderWindow &window, int score,
-              const sf::Font& font, GameState& state);
 
 // Checks for collision between two circular objects
 bool checkCollision(const sf::Shape& object1, float radius1,
@@ -40,12 +37,6 @@ void drawNumber(sf::RenderWindow &window, int n, sf::Vector2f pos);
 
 // Draws the remaining lives of the spaceship on the screen
 void drawLives(sf::RenderWindow &window, const SpaceShip& spaceship);
-
-// Reads the current Highscore from a txt file
-int readHighScore();
-
-// Writes the Highscore in the same txt file
-void writeHighScore(int score);
 
 // Handles user input for controlling the spaceship with a Controller
 void controllerInput(SpaceShip& spaceship, bool& paused, float delta);

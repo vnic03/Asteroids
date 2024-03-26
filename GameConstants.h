@@ -9,6 +9,7 @@
 // Tracks the current state of the game
 enum class GameState {
     START_SCREEN,
+    CHOOSE_NAME,
     RUNNING,
     GAME_OVER
 };

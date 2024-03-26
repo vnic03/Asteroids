@@ -1,9 +1,5 @@
 #include "logic.h"
 
-#include <cmath>
-#include <SFML/Graphics/Shape.hpp>
-#include <fstream>
-
 int runGame(sf::RenderWindow &window, const sf::Font& font, GameState& state) {
     bool paused = false;
 
@@ -165,57 +161,6 @@ int runGame(sf::RenderWindow &window, const sf::Font& font, GameState& state) {
         window.display();
     }
     return score;
-}
-
-bool startScreen(sf::RenderWindow &window, const sf::Font &font) {
-    // Title Text
-    sf::Text title("Asteroids", font, 40);
-    title.setFillColor(sf::Color::White);
-    title.setPosition(200, 200);
-
-    // Start-Game Text
-    sf::Text prompt("Press enter to start", font, 20);
-    prompt.setFillColor(sf::Color::White);
-    prompt.setPosition(250, 300);
-
-    // Credit Text
-    sf::Text createdByText;
-    createdByText.setFont(font);
-    createdByText.setString("Created by Nico");
-    createdByText.setCharacterSize(20);
-    createdByText.setFillColor(sf::Color(255, 255, 255, 128));
-    createdByText.setPosition(SIZE_X - createdByText.getLocalBounds().width - 20,
-                              SIZE_Y - createdByText.getLocalBounds().height - 20);
-
-    int level = 1; // Just for the start screen
-    std::vector<std::unique_ptr<Asteroid>> asteroids = Asteroid::initAsteroids(21, level);
-
-    Alien alien(AlienSize::SMALL);
-    alien.shape.setPosition(SIZE_X / 2.f + SIZE_X / 4.f, SIZE_Y / 2.5f);
-
-    while (window.isOpen()) {
-        sf::Event event{};
-        while (window.pollEvent(event)) {
-            if (event.type == sf::Event::Closed) {
-                return false; // Fenster geschlossen
-            }
-            if (event.type == sf::Event::KeyPressed &&
-                event.key.code == sf::Keyboard::Enter) {
-                return true; // Spiel starten
-            }
-        }
-
-        window.clear();
-        for (auto &asteroid : asteroids) {
-            window.draw(asteroid->shape);
-        }
-        alien.draw(window);
-        window.draw(title);
-        window.draw(prompt);
-        window.draw(createdByText);
-        window.display();
-    }
-    return false;
 }
 
 bool checkCollision(const sf::Shape& object1, float radius1,
@@ -473,115 +418,8 @@ void drawLives(sf::RenderWindow &window, const SpaceShip& spaceship) {
     }
 }
 
-void gameOver(sf::RenderWindow &window, const int score, const sf::Font& font,
-              GameState& state) {
-    sGameOver.play();
-    // "GAME OVER" Text
-    sf::Text gameOverText;
-    gameOverText.setFont(font);
-    gameOverText.setString("GAME OVER");
-    gameOverText.setCharacterSize(40);
-    gameOverText.setFillColor(sf::Color::White);
-    gameOverText.setPosition(
-            SIZE_X / 2.f - gameOverText.getLocalBounds().width / 2, SIZE_Y / 3.f);
-
-    // Score Text
-    sf::Text scoreText;
-    scoreText.setFont(font);
-    scoreText.setString("your Score: " + std::to_string(score));
-    scoreText.setCharacterSize(30);
-    scoreText.setFillColor(sf::Color::White);
-    scoreText.setPosition(
-            SIZE_X / 2.f - scoreText.getLocalBounds().width / 2, SIZE_Y / 2.f);
-
-    // High Score
-    int highscore = readHighScore();
-    if (score > highscore) {
-        writeHighScore(score);
-        highscore = score;
-    }
-
-    // High Score Text
-    sf::Text highscoreText;
-    highscoreText.setFont(font);
-    highscoreText.setString("Highscore: " + std::to_string(highscore));
-    highscoreText.setCharacterSize(30);
-    highscoreText.setFillColor(sf::Color::White);
-    highscoreText.setPosition(
-            SIZE_X / 2.f - highscoreText.getLocalBounds().width / 2,
-            scoreText.getPosition().y + 50);
-
-
-    // "Play Again" Button
-    sf::Text playAgainText;
-    playAgainText.setFont(font);
-    playAgainText.setString("Play Again");
-    playAgainText.setCharacterSize(30);
-    playAgainText.setFillColor(sf::Color::White);
-    playAgainText.setPosition(
-            SIZE_X / 2.f - playAgainText.getLocalBounds().width / 2, SIZE_Y / 1.5);
-
-    // "(press enter)" Text
-    sf::Text pressEnterText;
-    pressEnterText.setFont(font);
-    pressEnterText.setString("(press enter)");
-    pressEnterText.setCharacterSize(20);
-    pressEnterText.setFillColor(sf::Color::White);
-    pressEnterText.setPosition(
-            playAgainText.getPosition().x +
-            playAgainText.getLocalBounds().width / 2 -
-            pressEnterText.getLocalBounds().width / 2,
-
-            playAgainText.getPosition().y +
-            playAgainText.getLocalBounds().height + 10);
-
-    window.clear();
-    window.draw(gameOverText);
-    window.draw(highscoreText);
-    window.draw(scoreText);
-    window.draw(playAgainText);
-    window.draw(pressEnterText);
-    window.display();
-
-    bool wait = true;
-    while (wait) {
-        sf::Event event{};
-        while (window.pollEvent(event)) {
-            if (event.type == sf::Event::Closed ||
-                (event.type == sf::Event::KeyPressed &&
-                    event.key.code == sf::Keyboard::Escape)) {
-                window.close();
-                wait = false;
-            }
-            // Restarts the game if the player presses enter
-            if (event.type == sf::Event::KeyPressed &&
-                    event.key.code == sf::Keyboard::Enter) {
-                state = GameState::RUNNING;
-                wait = false;
-            }
-        }
-    }
-}
-
-int readHighScore() {
-    std::ifstream file("highscore.txt");
-    int highscore = 0;
-
-    if (file.is_open()) file >> highscore;
-    // creates the txt file for the first time
-    else writeHighScore(0);
-
-    file.close();
-    return highscore;
-}
-
-void writeHighScore(int score) {
-    std::ofstream file("highscore.txt");
-    if (file.is_open()) file << score;
-    file.close();
-}
-
-bool shot = false; // shoot button pressed ?
+// shoot button pressed ?
+bool shot = false;
 
 void controllerInput(SpaceShip& spaceship, bool& paused, float delta) {
     if (sf::Joystick::isConnected(0)) {

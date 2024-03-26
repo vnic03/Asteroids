@@ -23,8 +23,8 @@ Experience intense asteroid dodging and shooting action.
 Navigate through fields of asteroids and fight off alien 
 invaders to achieve high scores!
 
-![Gameplay Screenshot](assets/gameplay/gameplay.png)
-*The Picture does not do the game justice!*
+[![Gameplay Screenshot](assets/gameplay/gameplay.png)](https://www.youtube.com/watch?v=26BmzsI9pHM)
+*The Picture does not do the game justice, klick on it to see GamePlay!*
 
 ## Game Over 
 

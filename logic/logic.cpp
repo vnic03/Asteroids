@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <SFML/Graphics/Shape.hpp>
+#include <fstream>
 
 int runGame(sf::RenderWindow &window, const sf::Font& font, GameState& state) {
     bool paused = false;
@@ -487,11 +488,29 @@ void gameOver(sf::RenderWindow &window, const int score, const sf::Font& font,
     // Score Text
     sf::Text scoreText;
     scoreText.setFont(font);
-    scoreText.setString("Score: " + std::to_string(score));
+    scoreText.setString("your Score: " + std::to_string(score));
     scoreText.setCharacterSize(30);
     scoreText.setFillColor(sf::Color::White);
     scoreText.setPosition(
             SIZE_X / 2.f - scoreText.getLocalBounds().width / 2, SIZE_Y / 2.f);
+
+    // High Score
+    int highscore = readHighScore();
+    if (score > highscore) {
+        writeHighScore(score);
+        highscore = score;
+    }
+
+    // High Score Text
+    sf::Text highscoreText;
+    highscoreText.setFont(font);
+    highscoreText.setString("Highscore: " + std::to_string(highscore));
+    highscoreText.setCharacterSize(30);
+    highscoreText.setFillColor(sf::Color::White);
+    highscoreText.setPosition(
+            SIZE_X / 2.f - highscoreText.getLocalBounds().width / 2,
+            scoreText.getPosition().y + 50);
+
 
     // "Play Again" Button
     sf::Text playAgainText;
@@ -518,6 +537,7 @@ void gameOver(sf::RenderWindow &window, const int score, const sf::Font& font,
 
     window.clear();
     window.draw(gameOverText);
+    window.draw(highscoreText);
     window.draw(scoreText);
     window.draw(playAgainText);
     window.draw(pressEnterText);
@@ -541,6 +561,24 @@ void gameOver(sf::RenderWindow &window, const int score, const sf::Font& font,
             }
         }
     }
+}
+
+int readHighScore() {
+    std::ifstream file("highscore.txt");
+    int highscore = 0;
+
+    if (file.is_open()) file >> highscore;
+    // creates the txt file for the first time
+    else writeHighScore(0);
+
+    file.close();
+    return highscore;
+}
+
+void writeHighScore(int score) {
+    std::ofstream file("highscore.txt");
+    if (file.is_open()) file << score;
+    file.close();
 }
 
 bool shot = false; // shoot button pressed ?

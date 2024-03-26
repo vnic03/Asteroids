@@ -41,6 +41,12 @@ void drawNumber(sf::RenderWindow &window, int n, sf::Vector2f pos);
 // Draws the remaining lives of the spaceship on the screen
 void drawLives(sf::RenderWindow &window, const SpaceShip& spaceship);
 
+// Reads the current Highscore from a txt file
+int readHighScore();
+
+// Writes the Highscore in the same txt file
+void writeHighScore(int score);
+
 // Handles user input for controlling the spaceship with a Controller
 void controllerInput(SpaceShip& spaceship, bool& paused, float delta);
 

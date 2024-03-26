@@ -2,7 +2,6 @@
 cmake_minimum_required(VERSION 3.27)
 
 project(Asteroids)
-
 set(CMAKE_CXX_STANDARD 20)
 
 add_executable(Asteroids main.cpp
@@ -19,14 +18,8 @@ add_executable(Asteroids main.cpp
 
 # SFML
 # used for graphics, window management, system events, and audio
-find_package(SFML 2.5 COMPONENTS graphics window system audio REQUIRED)
-
-if(SFML_FOUND)
-    target_link_libraries(Asteroids sfml-graphics sfml-window sfml-system sfml-audio)
-endif()
+find_package(SFML COMPONENTS graphics window system audio REQUIRED)
+target_link_libraries(Asteroids sfml-graphics sfml-window sfml-system sfml-audio)
 
 # Copy assets to build directory
 file(COPY ${CMAKE_SOURCE_DIR}/assets DESTINATION ${CMAKE_BINARY_DIR})
-
-
-

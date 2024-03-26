@@ -61,4 +61,4 @@ make
 
 ### Note
 
-This is my first C++ project, aimed at learning the language. I built it from scratch. Thanks for playing^^
+This is my first C++ project, built from scratch and aimed at learning the language. Thanks for playing^^

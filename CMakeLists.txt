@@ -16,6 +16,7 @@ add_executable(Asteroids main.cpp
         MovableEntity.h                 # Base abstract class for spaceship and alien
         scenes/Scenes.h                 # Manages the logic and design of the scenes
         scenes/Scenes.cpp               # Implementation for logic and design
+        Config.cpp                      # Handles the .env file
         )
 
 # SFML

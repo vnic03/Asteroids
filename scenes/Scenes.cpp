@@ -1,4 +1,5 @@
 #include "Scenes.h"
+#include "../Config.cpp"
 
 bool startScreen(sf::RenderWindow &window, const sf::Font &font) {
     // Title Text
@@ -294,16 +295,37 @@ void gameOver(sf::RenderWindow &window, const int score, const sf::Font& font,
     }
 }
 
+
+/*
+ * Secures a string by XOR-ing each char with a random byte, seeded by `key`
+ */
+std::string secure(const std::string& data, const unsigned long key) {
+    std::string result = data;
+    srand(key);
+
+    for (size_t i = 0; i < data.size(); i++) {
+        // random byte
+        auto byte = static_cast<unsigned char>(rand() % 256);
+        // XOR it with the char
+        result[i] = static_cast<char>(data[i] ^ byte);
+    }
+    return result;
+}
+
 std::vector<Score>readHighScores() {
+    Config config(".env");
+    Config::createEnv(".env");
+    auto key = config.getKey();
+
     std::vector<Score> scores;
     std::ifstream file("highscores.txt");
     std::string line;
 
     while (std::getline(file, line)) {
+        line = secure(line, key);
         std::istringstream iss(line);
         std::string name;
         int score;
-
         if (std::getline(iss, name, ',') && (iss >> score)) {
             scores.push_back({name, score});
         }
@@ -313,19 +335,29 @@ std::vector<Score>readHighScores() {
 }
 
 void writeHighScore(const std::string& name, int score) {
-    std::vector<Score> scores = readHighScores();
-    auto it = std::find_if(scores.begin(), scores.end(), [&](const Score& s) {
-        return s.name == name;
-    });
-    if (it != scores.end()) {
-        if (it->score < score) it->score = score;
-    } else {
-        scores.push_back({name, score});
-    }
+    try {
+        Config config(".env");
+        Config::createEnv(".env");
+        auto key = config.getKey();
 
-    std::ofstream file("highscores.txt");
-    for (const auto& s : scores) {
-        file << s.name << "," << s.score << std::endl;
+        std::vector<Score> scores = readHighScores();
+        auto it = std::find_if(scores.begin(), scores.end(), [&](const Score& s) {
+            return s.name == name;
+        });
+        if (it != scores.end()) {
+            if (it->score < score) it->score = score;
+        } else {
+            scores.push_back({name, score});
+        }
+
+        std::ofstream file("highscores.txt");
+        for (const auto& s : scores) {
+            std::string line = s.name + "," + std::to_string(s.score);
+            line = secure(line, key);
+            file << line << std::endl;
+        }
+        file.close();
+    } catch (const std::exception& e) {
+        std::cerr << "Error while writing Highscore: " << e.what() << std::endl;
     }
-    file.close();
 }

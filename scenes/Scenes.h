@@ -6,6 +6,8 @@
 #include <SFML/Graphics/Font.hpp>
 #include <fstream>
 #include <sstream>
+#include <iostream>
+#include <unordered_map>
 
 #include "../GameConstants.h"
 #include "../Asteroid.h"

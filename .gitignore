@@ -49,3 +49,5 @@ Makefile
 *.code-workspace
 
 highscores.txt
+env
+.env

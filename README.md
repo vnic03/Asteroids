@@ -16,6 +16,7 @@ existing one from the list.
 ### Highscores
 Compete against yourself or friends by beating highscores! Each name has 
 its own highscore, making it fun to try and top the leaderboard.
+Highscores and Player-Names  are saved, even after closing the game!
 
 ## Gameplay 
 
@@ -59,6 +60,7 @@ Controller, offering a flexible arcade experience.
 - **Arrow Keys:** Navigate through the existing names list.
 - **Enter:** Select the highlighted name to start the game.
 - **Alt:** Save a new name to the list (after typing it).
+- **Del:** Deletes a player and it's highscore.
 
 ## Running the Game
 

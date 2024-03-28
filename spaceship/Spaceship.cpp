@@ -75,14 +75,7 @@ void SpaceShip::update(float delta) {
 
     sf::Vector2f pos = shape.getPosition() + velocity * delta;
 
-    // Wrap around the screen
-    if (pos.x < 0) pos.x += SIZE_X;
-    else if (pos.x > SIZE_X) pos.x = 0;
-
-    if (pos.y < 0) pos.y += SIZE_Y;
-    else if (pos.y > SIZE_Y) pos.y = 0;
-
-    shape.setPosition(pos);
+    wrapAroundScreen(shape, pos);
 
     float angle = shape.getRotation() * M_PI / 180.f;
     const float engineDistance = 12.f;

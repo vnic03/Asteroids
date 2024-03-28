@@ -1,0 +1,21 @@
+name: Build macOs
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: brew install sfml
+      - name: Build project
+        run: |
+          mkdir build && cd build
+          cmake ..
+          make
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: macOS-build
+          path: build/Asteroids

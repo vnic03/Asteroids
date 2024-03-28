@@ -6,6 +6,7 @@
 #include <cmath>
 #include <SFML/System/Clock.hpp>
 #include <optional>
+#include "GameConstants.h"
 
 // Represents a projectile with a position, direction, speed, and radius
 struct Projectile {
@@ -54,6 +55,18 @@ public:
 protected:
     // initializes the shape of the entity
     virtual void initShape() = 0;
+
+    // keeps all entities in the screen
+    template<typename T>
+    void wrapAroundScreen(T& t, sf::Vector2f pos) {
+        if (pos.x < 0) pos.x += SIZE_X;
+        else if (pos.x > SIZE_X) pos.x = 0;
+
+        if (pos.y < 0) pos.y += SIZE_Y;
+        else if (pos.y > SIZE_Y) pos.y = 0;
+
+        t.setPosition(pos);
+    }
 };
 
 #endif //ASTEROIDS_MOVABLEENTITY_H

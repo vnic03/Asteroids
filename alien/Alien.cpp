@@ -84,18 +84,13 @@ void Alien::update(float delta) {
             lastChange = 0.f;
         }
     }
-    // Wrap around the screen
-    if (pos.x < 0) pos.x += SIZE_X;
-    else if (pos.x > SIZE_X) pos.x -= SIZE_X;
-
-    if (pos.y < 0) pos.y += SIZE_Y;
-    else if (pos.y > SIZE_Y) pos.y -= SIZE_Y;
 
     for (auto& p : projectiles) {
         p.position += p.direction * p.speed * delta;
     }
 
-    shape.setPosition(pos);
+    wrapAroundScreen(shape, pos);
+
     line.setPosition(pos);
 
     // Positions the cockpit at the Top-Center of the alien

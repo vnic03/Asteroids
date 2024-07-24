@@ -12,6 +12,6 @@ cmake ..
 make
 
 if [ $? -eq 0 ]; then
-  echo "Have fun :)"
+  echo "Done! Have fun :)"
   ./Asteroids
 fi

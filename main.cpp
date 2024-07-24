@@ -99,6 +99,7 @@ int main() {
                 }
                 player1 = chooseName(window, font);
                 if (!player1.empty()) {
+                    score = 0;
                     state = GameState::RUNNING;
                 } else return 0;
                 break;
@@ -109,6 +110,8 @@ int main() {
                 auto names = chooseNames(window, font);
                 player1 = names.first; player2 = names.second;
                 if (!player1.empty() && !player2.empty()) {
+                    score = 0;
+                    score2 = 0;
                     state = GameState::COOP_RUNNING;
                 } else return 0;
                 break;
@@ -117,8 +120,6 @@ int main() {
             case GameState::RUNNING:
             case GameState::COOP_RUNNING:
                 scores = runGame(window, font, state, score, score2);
-                score = scores.first;
-                score2 = scores.second;
                 state = GameState::GAME_OVER;
                 break;
 

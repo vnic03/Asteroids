@@ -94,7 +94,7 @@ int main() {
                 break;
 
                 case GameState::CHOOSE_NAME: {
-                if (window.getSize().x > SIZE_X) {
+                if (window.getSize().x > SIZE_X || window.getSize().y > SIZE_Y) {
                     window.setSize(sf::Vector2u(SIZE_X, SIZE_Y));
                 }
                 player1 = chooseName(window, font);

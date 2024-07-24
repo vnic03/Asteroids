@@ -91,10 +91,7 @@ Clone the repository and build the game using CMake. Ensure you have the SFML li
 ```bash
 git clone https://github.com/yourusername/asteroids-clone.git
 cd asteroids-clone
-mkdir build && cd build
-cmake ..
-make
-./Asteroids
+./run.sh
 ```
 
 *Will be a downloadable for windows and mac soon!*

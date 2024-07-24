@@ -90,7 +90,7 @@ Clone the repository and build the game using CMake. Ensure you have the SFML li
 
 ```bash
 git clone https://github.com/vnic03/Asteroids
-cd asteroids-clone
+cd Asteroids
 ./run.sh
 ```
 

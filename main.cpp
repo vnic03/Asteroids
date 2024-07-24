@@ -117,6 +117,8 @@ int main() {
             case GameState::RUNNING:
             case GameState::COOP_RUNNING:
                 scores = runGame(window, font, state, score, score2);
+                score = scores.first;
+                score2 = scores.second;
                 state = GameState::GAME_OVER;
                 break;
 

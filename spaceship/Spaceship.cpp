@@ -27,7 +27,8 @@ void SpaceShip::draw(sf::RenderWindow &window) {
         for (const auto& projectile : projectiles) {
             sf::CircleShape circle(projectile.radius);
             circle.setPosition(projectile.position - sf::Vector2f(
-                    projectile.radius, projectile.radius));
+                    projectile.radius, projectile.radius)
+                    );
             circle.setFillColor(projectile.color);
             window.draw(circle);
         }

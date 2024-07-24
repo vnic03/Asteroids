@@ -7,6 +7,9 @@
 #include "scenes/Scenes.h"
 
 
+#define COOP_SIZE_X (SIZE_X + 250)
+#define COOP_SIZE_Y (SIZE_Y + 100)
+
 // Game-Sounds
 sf::SoundBuffer bBeat1, bBeat2, bSmallEx, bMediumEx, bBigEx, bFire, bThrust, bEx,
     bAlienB, bAlienS, bGameOver;
@@ -71,6 +74,7 @@ int main() {
 
     // Game-Loop
     GameState state = GameState::START_SCREEN;
+    std::pair<int, int> scores;
     int score = 0, score2 = 0;
     std::string player1, player2;
 
@@ -90,7 +94,7 @@ int main() {
                 break;
 
                 case GameState::CHOOSE_NAME: {
-                if (window.getSize().x > SIZE_X || window.getSize().y > SIZE_Y) {
+                if (window.getSize().x > SIZE_X) {
                     window.setSize(sf::Vector2u(SIZE_X, SIZE_Y));
                 }
                 player1 = chooseName(window, font);
@@ -101,10 +105,9 @@ int main() {
             }
 
             case GameState::COOP_CHOOSE_NAME: {
-                window.setSize(sf::Vector2u(SIZE_X + 250, SIZE_Y + 100));
+                window.setSize(sf::Vector2u(COOP_SIZE_X, COOP_SIZE_Y));
                 auto names = chooseNames(window, font);
-                player1 = names.first;
-                player2 = names.second;
+                player1 = names.first; player2 = names.second;
                 if (!player1.empty() && !player2.empty()) {
                     state = GameState::COOP_RUNNING;
                 } else return 0;
@@ -113,15 +116,13 @@ int main() {
 
             case GameState::RUNNING:
             case GameState::COOP_RUNNING:
-                score = runGame(window, font, state, score, score2);
+                scores = runGame(window, font, state, score, score2);
                 state = GameState::GAME_OVER;
                 break;
 
             case GameState::GAME_OVER:
                 sAlienS.stop(); sAlienB.stop();
-                // TODO: change gameOver method for coop mode,
-                //  sodass bide scores returned werden
-                gameOver(window, score, font, state, player1);
+                gameOver(window, scores, font, state, player1, player2);
                 state = chooseGameMode(window, font);
                 break;
         }

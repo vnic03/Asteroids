@@ -12,8 +12,8 @@
 
 
 // Main game loop: handles game logic, rendering, and user input
-int runGame(sf::RenderWindow &window, const sf::Font& font, GameState& state,
-            int &score, int &score2);
+std::pair<int, int> runGame(sf::RenderWindow &window, const sf::Font& font,
+                            GameState& state, int &score, int &score2);
 
 // Handles each Players controller input
 void handlePlayerInput(SpaceShip& spaceship, float delta,
@@ -33,8 +33,7 @@ void updateAliens(std::vector<std::unique_ptr<Alien>>& aliens,
                      SpaceShip& spaceship, float delta, int &score);
 
 // Adds a new alien to the game at a random location
-void addAlien(std::vector<std::unique_ptr<Alien>>& aliens, AlienSize size,
-              float delta);
+void addAlien(std::vector<std::unique_ptr<Alien>>& aliens, AlienSize size, float delta);
 
 // Draws the current score on the screen
 void drawScore(sf::RenderWindow &window, int id, int score);

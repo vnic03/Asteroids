@@ -21,7 +21,10 @@ struct ExplosionFragment {
 class SpaceShip : public MovableEntity {
 public:
     explicit SpaceShip(int id = 0);
-    int id; // id to differ between single and coop mode
+
+    // id to differ between single and coop mode
+    int id; // 0: Single-Player, 1&2: Coop-Mode
+
     sf::ConvexShape engine; // engine shape
 
     // Engine on/off flags - for keyboard and controller
@@ -62,16 +65,7 @@ public:
     // Single-Player: White
     // COOP: Player 1 gets Red and Player 2 gets Cyan
      sf::Color handleColor() const {
-        sf::Color color = WHITE;
-        switch (id) {
-            case 1:
-                color = PLAYER_1_COLOR;
-                break;
-            case 2:
-                color = PLAYER_2_COLOR;
-                break;
-        }
-        return color;
+        return (id == 1) ? PLAYER_1_COLOR : ((id == 2) ? PLAYER_2_COLOR : WHITE);
     }
 
 private:

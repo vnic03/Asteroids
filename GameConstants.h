@@ -22,7 +22,6 @@ const int SIZE_X = 900;
 const int SIZE_Y = 700;
 
 // Space-Ship
-// TODO: werte muessen im coop modus angepasst werden
 const float MOVE_SPEED = 250.f;
 const float ROTATION = 320.f;
 const float DRAG = 0.2f;

@@ -14,8 +14,9 @@
 #include "../alien/Alien.h"
 #include "../Config.cpp"
 
+
 // Tracks highscores for different players
-struct Score {
+struct HighScore {
     std::string name;
     int score;
 };
@@ -28,10 +29,10 @@ GameState chooseGameMode(sf::RenderWindow &window, const sf::Font &font);
 
 /*
  *  Makes the user to choose or enter a name.
- * - Type to enter a new name.
+ * - Type to enter a new name and press alt to add it the list of names
  * - Use up/down arrows to select from existing names.
  * - Press Enter to confirm.
- * - Press Delete to remove a selected name.
+ * - Press Delete to remove a selected name (highscore will also be deleted)
  */
 std::string chooseName(sf::RenderWindow &window, const sf::Font &font);
 
@@ -39,14 +40,14 @@ std::string chooseName(sf::RenderWindow &window, const sf::Font &font);
 std::pair<std::string, std::string> chooseNames(sf::RenderWindow &window, const sf::Font &font);
 
 // removes a player and their score
-void removePlayer(std::vector<Score>& scores, const std::string& name);
+void removePlayer(std::vector<HighScore>& scores, const std::string& name);
 
 // Displays the game over screen, showing the final score and a prompt to play again
-void gameOver(sf::RenderWindow &window, int score,
-              const sf::Font& font, GameState& state, const std::string& name);
+void gameOver(sf::RenderWindow &window, const std::pair<int, int>& scores, const sf::Font& font,
+              GameState& state, const std::string& name1, const std::string& name2 = "");
 
 // Reads the current Highscores from a text file
-std::vector<Score>readHighScores();
+std::vector<HighScore> readHighScores();
 
 // Writes the Highscore in the same text file
 void writeHighScore(const std::string& name, int score);

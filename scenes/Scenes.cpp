@@ -99,8 +99,8 @@ GameState chooseGameMode(sf::RenderWindow &window, const sf::Font &font) {
 std::string nameHandler(sf::RenderWindow &window, const sf::Font &font,
                         const std::string& instructionText, const std::string& error = "")
 {
-    std::vector<Score> scores = readHighScores();
-    std::sort(scores.begin(), scores.end(), [](const Score& a, const Score& b) {
+    std::vector<HighScore> scores = readHighScores();
+    std::sort(scores.begin(), scores.end(), [](const HighScore& a, const HighScore& b) {
         return a.score > b.score;
     });
 
@@ -175,7 +175,7 @@ std::string nameHandler(sf::RenderWindow &window, const sf::Font &font,
 
                 } else if (event.key.code == sf::Keyboard::LAlt || event.key.code == sf::Keyboard::RAlt) {
                     if (!playerNameInput.empty() && nameEntered) {
-                        auto it = std::find_if(scores.begin(), scores.end(), [&](const Score &s) {
+                        auto it = std::find_if(scores.begin(), scores.end(), [&](const HighScore &s) {
                             return s.name == playerNameInput;
                         });
                         if (it == scores.end()) {
@@ -191,7 +191,7 @@ std::string nameHandler(sf::RenderWindow &window, const sf::Font &font,
                     if (selectIndex >= 0 && selectIndex < scores.size()) {
                         return scores[selectIndex].name;
                     } else if (!playerNameInput.empty()) {
-                        auto it = std::find_if(scores.begin(), scores.end(), [&](const Score &s) {
+                        auto it = std::find_if(scores.begin(), scores.end(), [&](const HighScore &s) {
                             return s.name == playerNameInput;
                         });
                         if (it == scores.end()) {
@@ -266,8 +266,8 @@ std::pair<std::string, std::string> chooseNames(sf::RenderWindow &window, const 
 }
 
 
-void removePlayer(std::vector<Score>& scores, const std::string& name) {
-    scores.erase(std::remove_if(scores.begin(), scores.end(), [&](const Score& score) {
+void removePlayer(std::vector<HighScore>& scores, const std::string& name) {
+    scores.erase(std::remove_if(scores.begin(), scores.end(), [&](const HighScore& score) {
         return score.name == name;
     }), scores.end());
 
@@ -278,8 +278,20 @@ void removePlayer(std::vector<Score>& scores, const std::string& name) {
 }
 
 
-void gameOver(sf::RenderWindow &window, const int score, const sf::Font& font,
-              GameState& state, const std::string& name) {
+// Formats an integer with thousand separators, e.g. 10000 -> 10.000
+std::string format(int value) {
+    std::stringstream ss;
+    ss.imbue(std::locale(""));
+    ss << std::fixed << value;
+    return ss.str();
+}
+
+void gameOver(sf::RenderWindow &window, const std::pair<int, int>& scores, const sf::Font& font,
+              GameState& state, const std::string& name1, const std::string& name2)
+{
+    // Can't check for state so this is a temporary Solution
+    bool coop = scores.second != -1;
+
     sGameOver.play();
     // "GAME OVER" Text
     sf::Text gameOverText;
@@ -289,37 +301,72 @@ void gameOver(sf::RenderWindow &window, const int score, const sf::Font& font,
     gameOverText.setFillColor(WHITE);
     gameOverText.setPosition(SIZE_X / 2.f - gameOverText.getLocalBounds().width / 2, SIZE_Y / 3.f);
 
-    // High Score
-    std::vector<Score> scores = readHighScores();
-    auto it = std::find_if(scores.begin(), scores.end(), [&](const Score& s) {
-        return s.name == name;
+    // High Score for Player 1
+    std::vector<HighScore> scoresList = readHighScores();
+    auto it1 = std::find_if(scoresList.begin(), scoresList.end(), [&](const HighScore& s) {
+        return s.name == name1;
     });
-    int highscore = (it != scores.end()) ? it->score : 0;
+    int highscore1 = (it1 != scoresList.end()) ? it1->score : 0;
 
-    if (score > highscore) {
-        writeHighScore(name, score);
-        highscore = score;
+    if (scores.first > highscore1) {
+        writeHighScore(name1, scores.first);
+        highscore1 = scores.first;
     }
 
-    // High Score Text
-    sf::Text highscoreText;
-    highscoreText.setFont(font);
-    highscoreText.setString("Highscore: " + std::to_string(highscore));
-    highscoreText.setCharacterSize(32);
-    highscoreText.setFillColor(WHITE);
-    highscoreText.setPosition(
-            SIZE_X / 2.f - highscoreText.getLocalBounds().width / 2, SIZE_Y / 2.f);
+    // High Score for Player 2 if coop
+    int highscore2 = 0;
+    if (coop) {
+        auto it2 = std::find_if(scoresList.begin(), scoresList.end(), [&](const HighScore& s) {
+            return s.name == name2;
+        });
+        highscore2 = (it2 != scoresList.end()) ? it2->score : 0;
 
-    // Score Text
-    sf::Text scoreText;
-    scoreText.setFont(font);
-    scoreText.setString("your score: " + std::to_string(score));
-    scoreText.setCharacterSize(28);
-    scoreText.setFillColor(WHITE);
-    scoreText.setPosition(
-            SIZE_X / 2.f - scoreText.getLocalBounds().width / 2,
-            highscoreText.getPosition().y + highscoreText.getLocalBounds().height + 40);
+        if (scores.second > highscore2) {
+            writeHighScore(name2, scores.second);
+            highscore2 = scores.second;
+        }
+    }
 
+    // High Score Text for Player 1
+    sf::Text highscoreText1;
+    highscoreText1.setFont(font);
+    highscoreText1.setString((coop ? "Player 1 Highscore: " : "Highscore: ") + format(highscore1));
+    highscoreText1.setCharacterSize(32);
+    highscoreText1.setFillColor(WHITE);
+    highscoreText1.setPosition(
+            SIZE_X / 2.f - highscoreText1.getLocalBounds().width / 2, SIZE_Y / 2.f);
+
+    // Score Text for Player 1
+    sf::Text scoreText1;
+    scoreText1.setFont(font);
+    scoreText1.setString((coop ? "Player 1 Score: " : "Your score: ") + format(scores.first));
+    scoreText1.setCharacterSize(28);
+    scoreText1.setFillColor(WHITE);
+    scoreText1.setPosition(
+            SIZE_X / 2.f - scoreText1.getLocalBounds().width / 2,
+            highscoreText1.getPosition().y + highscoreText1.getLocalBounds().height + 40);
+
+    // High Score and Score Text for Player 2 if coop
+    sf::Text highscoreText2;
+    sf::Text scoreText2;
+    if (coop) {
+        highscoreText2.setFont(font);
+        highscoreText2.setString("Player 2 Highscore: " + format(highscore2));
+        highscoreText2.setCharacterSize(32);
+        highscoreText2.setFillColor(WHITE);
+        highscoreText2.setPosition(
+                SIZE_X / 2.f - highscoreText2.getLocalBounds().width / 2,
+                scoreText1.getPosition().y + scoreText1.getLocalBounds().height + 50 // increased spacing
+        );
+
+        scoreText2.setFont(font);
+        scoreText2.setString("Player 2 Score: " + format(scores.second));
+        scoreText2.setCharacterSize(28);
+        scoreText2.setFillColor(WHITE);
+        scoreText2.setPosition(
+                SIZE_X / 2.f - scoreText2.getLocalBounds().width / 2,
+                highscoreText2.getPosition().y + highscoreText2.getLocalBounds().height + 40);
+    }
 
     // "Play Again" Button
     sf::Text playAgainText;
@@ -340,16 +387,23 @@ void gameOver(sf::RenderWindow &window, const int score, const sf::Font& font,
             playAgainText.getPosition().x +
             playAgainText.getLocalBounds().width / 2 -
             pressEnterText.getLocalBounds().width / 2,
-
             playAgainText.getPosition().y +
             playAgainText.getLocalBounds().height + 10);
 
     window.clear();
     window.draw(gameOverText);
-    window.draw(highscoreText);
-    window.draw(scoreText);
-    window.draw(playAgainText);
-    window.draw(pressEnterText);
+
+    window.draw(highscoreText1);
+    window.draw(scoreText1);
+
+    if (coop) {
+        window.draw(highscoreText2);
+        window.draw(scoreText2);
+    }
+
+    if (!coop) window.draw(playAgainText);
+    if (!coop) window.draw(pressEnterText);
+
     window.display();
 
     bool wait = true;
@@ -358,13 +412,15 @@ void gameOver(sf::RenderWindow &window, const int score, const sf::Font& font,
         while (window.pollEvent(event)) {
             if (event.type == sf::Event::Closed ||
                 (event.type == sf::Event::KeyPressed &&
-                 event.key.code == sf::Keyboard::Escape)) {
+                 event.key.code == sf::Keyboard::Escape))
+            {
                 window.close();
                 wait = false;
             }
             // Restarts the game if the player presses enter
             if (event.type == sf::Event::KeyPressed &&
-                event.key.code == sf::Keyboard::Enter) {
+                event.key.code == sf::Keyboard::Enter)
+            {
                 state = GameState::RUNNING;
                 wait = false;
             }
@@ -389,12 +445,12 @@ std::string secure(const std::string& data, const unsigned long key) {
     return result;
 }
 
-std::vector<Score>readHighScores() {
+std::vector<HighScore>readHighScores() {
     Config config(".env");
     Config::createEnv(".env");
     auto key = config.getKey();
 
-    std::vector<Score> scores;
+    std::vector<HighScore> scores;
     std::ifstream file(".highscores.txt");
     std::string line;
 
@@ -417,8 +473,8 @@ void writeHighScore(const std::string& name, int score) {
         Config::createEnv(".env");
         auto key = config.getKey();
 
-        std::vector<Score> scores = readHighScores();
-        auto it = std::find_if(scores.begin(), scores.end(), [&](const Score& s) {
+        std::vector<HighScore> scores = readHighScores();
+        auto it = std::find_if(scores.begin(), scores.end(), [&](const HighScore& s) {
             return s.name == name;
         });
 

@@ -1,7 +1,8 @@
 #include "logic.h"
 
 
-int runGame(sf::RenderWindow &window, const sf::Font& font, GameState& state, int &score, int &score2)
+std::pair<int, int> runGame(sf::RenderWindow &window, const sf::Font& font,
+                            GameState& state, int &score, int &score2)
 {
     bool paused = false; // tracks if the game is running or paused
 
@@ -24,7 +25,8 @@ int runGame(sf::RenderWindow &window, const sf::Font& font, GameState& state, in
     bool coop = state == GameState::COOP_RUNNING;
 
     // Asteroids, and Aliens
-    auto asteroids = Asteroid::initAsteroids(10, level);
+    const int ASTEROID_AMOUNT = coop ? 12 : 10;
+    auto asteroids = Asteroid::initAsteroids(ASTEROID_AMOUNT, level);
     std::vector<std::unique_ptr<Alien>> aliens;
 
     // Manages alien spawn timing, count, and interval
@@ -84,9 +86,11 @@ int runGame(sf::RenderWindow &window, const sf::Font& font, GameState& state, in
                 level++;
                 beatInterval = initialBI;
                 soundSpeedTimer.restart();
-                if (level % 2 == 0) {
-                    if (!coop) spaceships[0].lives++;
-                    else {
+                if ((level % 2 == 0 && level < 10) || (level % 4 == 2 && level >= 10))
+                {
+                    if (!coop) {
+                        spaceships[0].lives++;
+                    } else {
                         spaceships[1].lives++;
                         spaceships[2].lives++;
                     }
@@ -100,23 +104,22 @@ int runGame(sf::RenderWindow &window, const sf::Font& font, GameState& state, in
                     spaceships[2].invincible = true;
                     spaceships[2].invincibleTimer.restart();
                 }
-                asteroids = Asteroid::initAsteroids(10, level);
+                asteroids = Asteroid::initAsteroids(ASTEROID_AMOUNT, level);
                 aliensSpawned = 0;
                 alienSpawnTimer.restart();
-                nextAlienSpawnTime = (std::rand() % 5) + 8;
+                nextAlienSpawnTime = coop ? (std::rand() % 5) + 6 : (std::rand() % 5) + 8;
             }
             if (aliensSpawned < 2 &&
                 alienSpawnTimer.getElapsedTime().asSeconds() > nextAlienSpawnTime)
             {
-                AlienSize size = (aliensSpawned % 2 == 0) ?
-                                 AlienSize::BIG : AlienSize::SMALL;
+                AlienSize size = (aliensSpawned % 2 == 0) ? AlienSize::BIG : AlienSize::SMALL;
                 addAlien(aliens, size, delta);
 
                 aliensSpawned++;
                 alienSpawnTimer.restart();
 
                 if (aliensSpawned < 2) {
-                    nextAlienSpawnTime = (std::rand() % 5) + 8;
+                    nextAlienSpawnTime = coop ? (std::rand() % 5) + 6 : (std::rand() % 5) + 8;
                 }
             }
 
@@ -179,12 +182,12 @@ int runGame(sf::RenderWindow &window, const sf::Font& font, GameState& state, in
             if (!coop) {
                 if (spaceships[0].lives <= 0) {
                     state = GameState::GAME_OVER;
-                    return score; // Return final score
+                    return std::make_pair(score, -1);
                 }
             } else {
                 if (spaceships[1].lives <= 0 && spaceships[2].lives <= 0) {
                     state = GameState::GAME_OVER;
-                    return std::max(score, score2); // TODO: anpassen
+                    return std::make_pair(score, score2);
                 }
             }
 
@@ -211,8 +214,8 @@ int runGame(sf::RenderWindow &window, const sf::Font& font, GameState& state, in
 
         window.display();
     }
-    // TODO: anpassen was man return kann
-    return coop ? std::max(score, score2) : score;
+
+    return coop ? std::make_pair(score, score2) : std::make_pair(score, 0);
 }
 
 void handlePlayerInput(SpaceShip& spaceship, float delta,
@@ -317,20 +320,17 @@ void updateAsteroids(std::vector<std::unique_ptr<Asteroid>>& asteroids,
 
                     if (size == AsteroidSize::BIG) {
                         for (int i = 0; i < 2; i++) {
-                            auto newAsteroid = std::make_unique<Asteroid>(
-                                    AsteroidSize::MEDIUM);
+                            auto newAsteroid = std::make_unique<Asteroid>(AsteroidSize::MEDIUM);
                             newAsteroid->initShape(level);
-                            newAsteroid->shape.setPosition(oldPosition +
-                                                    sf::Vector2f(i * 10, 0));
+                            newAsteroid->shape.setPosition(oldPosition + sf::Vector2f(i * 10, 0));
                             asteroids.push_back(std::move(newAsteroid));
                         }
+
                     } else if (size == AsteroidSize::MEDIUM) {
                         for (int i = 0; i < 2; i++) {
-                            auto newAsteroid = std::make_unique<Asteroid>(
-                                    AsteroidSize::SMALL);
+                            auto newAsteroid = std::make_unique<Asteroid>(AsteroidSize::SMALL);
                             newAsteroid->initShape(level);
-                            newAsteroid->shape.setPosition(oldPosition +
-                                                        sf::Vector2f(i * 10, 0));
+                            newAsteroid->shape.setPosition(oldPosition + sf::Vector2f(i * 10, 0));
                             asteroids.push_back(std::move(newAsteroid));
                         }
                     }
@@ -503,62 +503,45 @@ void drawLivesCoop(sf::RenderWindow &window, const SpaceShip* spaceships) {
     drawLives(window, spaceships[2], 68);
 }
 
-bool shot = false; // shoot button pressed ?
+// Handles the input from a single game controller
+void handleControllerInput(SpaceShip& s, unsigned int id, float delta,
+                           float joystickDeadzone, unsigned int move,
+                           unsigned int shoot, bool& shot, bool paused)
+{
+    float x = sf::Joystick::getAxisPosition(id, sf::Joystick::X);
+
+    if (x < -joystickDeadzone && !paused) s.rotate(-ROTATION * delta);
+    else if (x > joystickDeadzone) s.rotate(ROTATION * delta);
+
+    s.toggleEngineC(sf::Joystick::isButtonPressed(id, move));
+
+    bool shootButtonPressed = sf::Joystick::isButtonPressed(id, shoot);
+    if (shootButtonPressed && !shot) {
+        s.shoot();
+        shot = true;
+    }
+    if (!shootButtonPressed)  shot = false;
+}
+
 void controllerInput(SpaceShip* spaceships, bool& paused, float delta, bool& coop) {
-    const float JOYSTICK_DEADZONE = coop ? 35 : 15;
-    // Check inputs for the first controller (ID 0)
-    if (sf::Joystick::isConnected(0)) {
-        // left stick
-        float x = sf::Joystick::getAxisPosition(0, sf::Joystick::X);
+    // These are PS4 specific rn
+    const unsigned int CONTROLLER_ID = 0;
+    const unsigned int SECOND_CONTROLLER_ID = 1;
 
-        if (x < -JOYSTICK_DEADZONE && !paused) {
+    const float JOYSTICK_DEADZONE = coop ? 65 : 15;
+    const unsigned int R2_BUTTON = 7;
+    const unsigned int X_BUTTON = 0;
 
-            if (!coop) spaceships[0].rotate(-ROTATION * delta);
-            else spaceships[1].rotate(-ROTATION * delta);
+    // shoot button pressed
+    static bool shot1 = false;
+    static bool shot2 = false;
 
-        } else if (x > JOYSTICK_DEADZONE) {
-
-            if (!coop) spaceships[0].rotate(ROTATION * delta);
-            else spaceships[1].rotate(ROTATION * delta);
-        }
-
-        // These are PS4 specific rn
-        if (!coop) spaceships[0].toggleEngineC(sf::Joystick::isButtonPressed(0, 7)); // R2-Button
-        else spaceships[1].toggleEngineC(sf::Joystick::isButtonPressed(0, 7)); // R2-Button
-
-        bool xButtonPressed = sf::Joystick::isButtonPressed(0, 0); // X-Button
-        if (xButtonPressed && !shot) {
-            if (!coop) spaceships[0].shoot();
-            else spaceships[1].shoot();
-            shot = true;
-        }
-        if (!xButtonPressed) {
-            shot = false;
-        }
-
-        // Check inputs for the second controller (ID 1)
-        if (sf::Joystick::isConnected(1) && coop) {
-            // left stick
-            float x2 = sf::Joystick::getAxisPosition(1, sf::Joystick::X);
-
-            if (x2 < -JOYSTICK_DEADZONE && !paused) {
-                spaceships[2].rotate(-ROTATION * delta);
-            } else if (x2 > JOYSTICK_DEADZONE) {
-                spaceships[2].rotate(ROTATION * delta);
-            }
-
-            // These are PS4 specific rn
-            spaceships[2].toggleEngineC(sf::Joystick::isButtonPressed(1, 7)); // R2-Button
-
-            bool xButtonPressed2 = sf::Joystick::isButtonPressed(1, 0); // X-Button
-            static bool shot2 = false;
-            if (xButtonPressed2 && !shot2) {
-                spaceships[2].shoot();
-                shot2 = true;
-            }
-            if (!xButtonPressed2) {
-                shot2 = false;
-            }
-        }
+    if (sf::Joystick::isConnected(CONTROLLER_ID)) {
+        handleControllerInput(coop ? spaceships[1] : spaceships[0],
+                              CONTROLLER_ID, delta, JOYSTICK_DEADZONE, R2_BUTTON, X_BUTTON, shot1, paused);
+    }
+    if (sf::Joystick::isConnected(SECOND_CONTROLLER_ID) && coop) {
+        handleControllerInput(spaceships[2], SECOND_CONTROLLER_ID, delta,
+                              JOYSTICK_DEADZONE, R2_BUTTON, X_BUTTON, shot2, paused);
     }
 }

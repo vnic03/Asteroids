@@ -89,7 +89,7 @@ Follow the installation instructions in the release notes to install and start p
 Clone the repository and build the game using CMake. Ensure you have the SFML library installed on your system.
 
 ```bash
-git clone https://github.com/vnic03/asteroids-clone.git
+git clone https://github.com/vnic03/Asteroids
 cd asteroids-clone
 ./run.sh
 ```

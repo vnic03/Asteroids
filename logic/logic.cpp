@@ -1,7 +1,9 @@
 #include "logic.h"
 
-int runGame(sf::RenderWindow &window, const sf::Font& font, GameState& state) {
-    bool paused = false;
+
+int runGame(sf::RenderWindow &window, const sf::Font& font, GameState& state, int &score, int &score2)
+{
+    bool paused = false; // tracks if the game is running or paused
 
     sf::Clock clock; // Game loop clock
     sf::Clock beat; // Beat clock
@@ -12,13 +14,16 @@ int runGame(sf::RenderWindow &window, const sf::Font& font, GameState& state) {
     // Seed for random number generator
     std::srand(static_cast<unsigned>(std::time(nullptr)));
 
-    int score = 0;
     int level = 1;
     float initialBI = 1.f; // Initial beat interval
     float beatInterval = initialBI;
 
-    // Spaceship, asteroids, and aliens
-    SpaceShip spaceship;
+    // 0: Single-PLayer, 1 & 2: COOP
+    SpaceShip spaceships[] = { SpaceShip(0), SpaceShip(1), SpaceShip(2) };
+
+    bool coop = state == GameState::COOP_RUNNING;
+
+    // Asteroids, and Aliens
     auto asteroids = Asteroid::initAsteroids(10, level);
     std::vector<std::unique_ptr<Alien>> aliens;
 
@@ -45,23 +50,33 @@ int runGame(sf::RenderWindow &window, const sf::Font& font, GameState& state) {
             sAlienS.setLoop(false);
         }
 
-        sf::Event event{};
+        sf::Event event{ };
         while (window.pollEvent(event)) {
             if (event.type == sf::Event::Closed) window.close();
 
             if (event.type == sf::Event::KeyPressed) {
-                if (event.key.code == sf::Keyboard::Space) {
+                if (event.key.code == SHOOT) {
                     if (!paused) {
-                        spaceship.keyClicked = false;
+                        if (!coop) spaceships[0].keyClicked = false;
+                        else spaceships[1].keyClicked = false;
                     }
-                } else if (event.key.code == sf::Keyboard::P) {
+                } else if (event.key.code == COOP_SHOOT) {
+                    if (coop && !paused) {
+                        spaceships[2].keyClicked = false;
+                    }
+
+                } else if (event.key.code == PAUSE) {
                     paused = !paused;
                 }
             }
         }
         if (event.type == sf::Event::KeyReleased) {
-            if (event.key.code == sf::Keyboard::Space) {
-                spaceship.keyClicked = false;
+            if (event.key.code == SHOOT) {
+                if (!coop) spaceships[0].keyClicked = false;
+                else spaceships[1].keyClicked = false;
+
+            } else if (event.key.code == COOP_SHOOT) {
+                if (coop) spaceships[2].keyClicked = false;
             }
         }
         if (!paused) {
@@ -70,10 +85,21 @@ int runGame(sf::RenderWindow &window, const sf::Font& font, GameState& state) {
                 beatInterval = initialBI;
                 soundSpeedTimer.restart();
                 if (level % 2 == 0) {
-                    spaceship.lives++;
+                    if (!coop) spaceships[0].lives++;
+                    else {
+                        spaceships[1].lives++;
+                        spaceships[2].lives++;
+                    }
                 }
-                spaceship.invincible = true;
-                spaceship.invincibleTimer.restart();
+                if (!coop) {
+                    spaceships[0].invincible = true;
+                    spaceships[0].invincibleTimer.restart();
+                } else {
+                    spaceships[1].invincible = true;
+                    spaceships[1].invincibleTimer.restart();
+                    spaceships[2].invincible = true;
+                    spaceships[2].invincibleTimer.restart();
+                }
                 asteroids = Asteroid::initAsteroids(10, level);
                 aliensSpawned = 0;
                 alienSpawnTimer.restart();
@@ -88,40 +114,50 @@ int runGame(sf::RenderWindow &window, const sf::Font& font, GameState& state) {
 
                 aliensSpawned++;
                 alienSpawnTimer.restart();
+
                 if (aliensSpawned < 2) {
                     nextAlienSpawnTime = (std::rand() % 5) + 8;
                 }
             }
 
-            if (!spaceship.explosion) {
-                controllerInput(spaceship, paused, delta);
+            // Controls
+            if (!coop) {
+                if (!spaceships[0].explosion) {
+                    controllerInput(spaceships, paused, delta, coop);
+                    handlePlayerInput(spaceships[0], delta, LEFT, RIGHT, UP, SHOOT);
+                }
+                spaceships[0].update(delta);
 
-                if (sf::Keyboard::isKeyPressed(sf::Keyboard::A) ||
-                    sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) {
-                    spaceship.rotate(-ROTATION * delta);
+            } else {
+                if (!spaceships[1].explosion) {
+                    controllerInput(spaceships, paused, delta, coop);
+                    handlePlayerInput(spaceships[1], delta, LEFT, RIGHT, UP, SHOOT);
                 }
-                if (sf::Keyboard::isKeyPressed(sf::Keyboard::D) ||
-                    sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) {
-                    spaceship.rotate(ROTATION * delta);
+                if (!spaceships[2].explosion) {
+                    controllerInput(spaceships, paused, delta, coop);
+                    handlePlayerInput(spaceships[2], delta, COOP_LEFT, COOP_RIGHT, COOP_UP, COOP_SHOOT);
                 }
-                spaceship.toggleEngine(
-                        sf::Keyboard::isKeyPressed(sf::Keyboard::W)
-                        || sf::Keyboard::isKeyPressed(sf::Keyboard::Up));
-
-                if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space) &&
-                    !spaceship.keyClicked) {
-                    spaceship.shoot();
-                    spaceship.keyClicked = true;
-                }
+                spaceships[1].update(delta);
+                spaceships[2].update(delta);
             }
 
-            spaceship.update(delta);
             window.clear(sf::Color::Black);
 
-            spaceship.draw(window);
+            if (!coop) spaceships[0].draw(window);
+            else {
+                spaceships[1].draw(window);
+                spaceships[2].draw(window);
+            }
 
-            updateAsteroids(asteroids, spaceship, delta, score, level);
-            updateAliens(aliens, spaceship, delta, score);
+            if (!coop) {
+                updateAsteroids(asteroids, spaceships[0], delta, score, level);
+                updateAliens(aliens, spaceships[0], delta, score);
+            } else {
+                updateAsteroids(asteroids, spaceships[1], delta, score, level);
+                updateAliens(aliens, spaceships[1], delta, score);
+                updateAsteroids(asteroids, spaceships[2], delta, score2, level);
+                updateAliens(aliens, spaceships[2], delta, score2);
+            }
 
             for (auto &asteroid: asteroids) {
                 window.draw(asteroid->shape);
@@ -130,20 +166,35 @@ int runGame(sf::RenderWindow &window, const sf::Font& font, GameState& state) {
                 alien->draw(window);
             }
 
-            drawScore(window, score);
-            drawLives(window, spaceship);
-
-            if (spaceship.lives <= 0) {
-                state = GameState::GAME_OVER;
-                return score; // Return final score
+            if (!coop) {
+                drawScore(window, spaceships[0].id, score);
+            } else {
+                drawScore(window, spaceships[1].id, score);
+                drawScore(window, spaceships[2].id, score2);
             }
+
+            if (!coop) drawLives(window, spaceships[0]);
+            else drawLivesCoop(window, spaceships);
+
+            if (!coop) {
+                if (spaceships[0].lives <= 0) {
+                    state = GameState::GAME_OVER;
+                    return score; // Return final score
+                }
+            } else {
+                if (spaceships[1].lives <= 0 && spaceships[2].lives <= 0) {
+                    state = GameState::GAME_OVER;
+                    return std::max(score, score2); // TODO: anpassen
+                }
+            }
+
         } else {
             // PAUSE - Display "Pause" text
             sf::Text pauseText("Pause", font, 40);
-            pauseText.setFillColor(sf::Color::White);
+            pauseText.setFillColor(WHITE);
             pauseText.setPosition(
-                    SIZE_X / 2.f - pauseText.getLocalBounds().width / 2,
-                    SIZE_Y / 2.f);
+                    SIZE_X / 2.f - pauseText.getLocalBounds().width / 2, SIZE_Y / 2.f
+                    );
             window.draw(pauseText);
         }
 
@@ -160,7 +211,25 @@ int runGame(sf::RenderWindow &window, const sf::Font& font, GameState& state) {
 
         window.display();
     }
-    return score;
+    // TODO: anpassen was man return kann
+    return coop ? std::max(score, score2) : score;
+}
+
+void handlePlayerInput(SpaceShip& spaceship, float delta,
+                       sf::Keyboard::Key left, sf::Keyboard::Key right,
+                       sf::Keyboard::Key thrust, sf::Keyboard::Key fire)
+{
+    if (sf::Keyboard::isKeyPressed(left)) {
+        spaceship.rotate(-ROTATION * delta);
+    }
+    if (sf::Keyboard::isKeyPressed(right)) {
+        spaceship.rotate(ROTATION * delta);
+    }
+    spaceship.toggleEngine(sf::Keyboard::isKeyPressed(thrust));
+    if (sf::Keyboard::isKeyPressed(fire) && !spaceship.keyClicked) {
+        spaceship.shoot();
+        spaceship.keyClicked = true;
+    }
 }
 
 bool checkCollision(const sf::Shape& object1, float radius1,
@@ -288,12 +357,12 @@ void updateAliens(std::vector<std::unique_ptr<Alien>>& aliens,
     for (auto& alien : aliens) {
         alien->projectiles.erase(
                 std::remove_if(
-                        alien->projectiles.begin(),
-                        alien->projectiles.end(),
-                        [&spaceship](const Projectile& p) {
-                            return checkCollision(p.position, p.radius,
+                        alien->projectiles.begin(), alien->projectiles.end(),
+                        [&spaceship] (const Projectile& p) {
+                            return checkCollision(p.position,
+                                                  p.radius,
                                                   spaceship.shape.getPosition(),
-                                                  spaceship.radius);
+                                                  spaceship.radius );
                         }
                 ),
                 alien->projectiles.end()
@@ -328,28 +397,28 @@ void updateAliens(std::vector<std::unique_ptr<Alien>>& aliens,
         }
         for (auto& p : alien->projectiles) {
             if (!spaceship.explosion && !spaceship.invincible &&
-                checkCollision(p.position, p.radius,
-                               spaceship.shape.getPosition(), spaceship.radius))
+                checkCollision(p.position, p.radius, spaceship.shape.getPosition(), spaceship.radius))
             {
                 spaceship.explode();
                 break;
             }
         }
     }
-    aliens.erase(std::remove_if(aliens.begin(), aliens.end(),
-                                [] (const std::unique_ptr<Alien>& alien) {
-                                    return alien->isDestroyed();
-    }),
-                 aliens.end());
+    aliens.erase(std::remove_if(
+            aliens.begin(),
+            aliens.end(),
+            [] (const std::unique_ptr<Alien>& alien) {
+                return alien->isDestroyed();
+            }
+    ), aliens.end());
 
-    sf::Vector2f shipPos = spaceship.shape.getPosition();
     for (auto& alien : aliens) {
-        alien->shoot(shipPos);
+        alien->shoot(spaceship.shape.getPosition());
     }
 }
 
-void addAlien(std::vector<std::unique_ptr<Alien>>& aliens, AlienSize size,
-              float delta) {
+void addAlien(std::vector<std::unique_ptr<Alien>>& aliens, AlienSize size, float delta)
+{
     auto alien = std::make_unique<Alien>(size);
     alien->update(delta);
     aliens.push_back(std::move(alien));
@@ -366,37 +435,47 @@ void addAlien(std::vector<std::unique_ptr<Alien>>& aliens, AlienSize size,
     }
 }
 
-void drawScore(sf::RenderWindow &window, int score) {
-    std::string s = std::to_string(score);
-    s = std::string(5 - s.length(), '0') + s;
-
-    sf::Vector2f pos(SIZE_X - (100 + SCALE * 4), 20);
-
-    for (char digit : s) {
-        int n = digit - '0';
-        drawNumber(window, n, pos);
-        pos.x += SCALE * 1.2f;
-    }
-}
-
-void drawNumber(sf::RenderWindow &window, int n, sf::Vector2f pos) {
+// Draws a single digit of the score on the screen at the specified position
+void drawNumber(sf::RenderWindow &window, int n, sf::Vector2f pos, int id)
+{
     const auto& vectors = NUMBER_LINES[n];
+    sf::VertexArray vertices(sf::Lines, vectors.size());
 
     for (size_t i = 0; i < vectors.size(); i += 2) {
-        sf::Vertex line[] = {
-                sf::Vertex(sf::Vector2f(pos.x + vectors[i].x * SCALE,
-                                        pos.y +vectors[i].y * SCALE)),
-                sf::Vertex(sf::Vector2f(pos.x + vectors[i + 1].x * SCALE,
-                                        pos.y + vectors[i + 1].y * SCALE))
-        };
-        line[0].color = sf::Color::White;
-        line[1].color = sf::Color::White;
+        vertices[i].position = sf::Vector2f(
+                pos.x + vectors[i].x * NUMBER_SCALE, pos.y + vectors[i].y * NUMBER_SCALE );
+        vertices[i + 1].position = sf::Vector2f(
+                pos.x + vectors[i + 1].x * NUMBER_SCALE, pos.y + vectors[i + 1].y * NUMBER_SCALE );
+    }
 
-        window.draw(line, 2, sf::Lines);
+    sf::Color color = (id == 1) ? PLAYER_1_COLOR : (id == 2) ? PLAYER_2_COLOR : WHITE;
+
+    for (size_t i = 0; i < vertices.getVertexCount(); ++i) {
+        vertices[i].color = color;
+    }
+
+    window.draw(vertices);
+}
+
+void drawScore(sf::RenderWindow &window, int id, int score) {
+    std::string str = std::to_string(score);
+    str = std::string(5 - str.length(), '0') + str;
+    sf::Vector2f pos;
+
+    if (id == 0 || id == 1) {
+        pos = sf::Vector2f(SIZE_X - (100 + NUMBER_SCALE * 4), 20);
+    } else {
+        pos = sf::Vector2f(SIZE_X - (100 + NUMBER_SCALE * 4), 60);
+    }
+
+    for (char digit : str) {
+        int n = digit - '0';
+        drawNumber(window, n, pos, id);
+        pos.x += NUMBER_SCALE * 1.2f;
     }
 }
 
-void drawLives(sf::RenderWindow &window, const SpaceShip& spaceship) {
+void drawLives(sf::RenderWindow &window, const SpaceShip& spaceship, int y) {
     sf::ConvexShape shape;
 
     shape.setPointCount(5);
@@ -407,41 +486,79 @@ void drawLives(sf::RenderWindow &window, const SpaceShip& spaceship) {
     shape.setPoint(3, sf::Vector2f(8, -10));
     shape.setPoint(4, sf::Vector2f(-8, -10));
 
-    shape.setOutlineColor(sf::Color::White);
+    shape.setOutlineColor(spaceship.handleColor());
     shape.setFillColor(sf::Color::Transparent);
     shape.setOutlineThickness(1.0f);
     shape.setRotation(180);
 
     for (int i = 0; i < spaceship.lives; ++i) {
-        shape.setPosition(25 + i * 40, 28);
+        shape.setPosition(25 + i * 40, y);
         window.draw(shape);
     }
 }
 
-// shoot button pressed ?
-bool shot = false;
+void drawLivesCoop(sf::RenderWindow &window, const SpaceShip* spaceships) {
+    // 28 and 68 are the y-offset
+    drawLives(window, spaceships[1], 28);
+    drawLives(window, spaceships[2], 68);
+}
 
-void controllerInput(SpaceShip& spaceship, bool& paused, float delta) {
+bool shot = false; // shoot button pressed ?
+void controllerInput(SpaceShip* spaceships, bool& paused, float delta, bool& coop) {
+    const float JOYSTICK_DEADZONE = coop ? 35 : 15;
+    // Check inputs for the first controller (ID 0)
     if (sf::Joystick::isConnected(0)) {
         // left stick
         float x = sf::Joystick::getAxisPosition(0, sf::Joystick::X);
 
-        if (x < -15 && !paused) {
-            spaceship.rotate(-ROTATION * delta);
-        } else if (x > 15) {
-            spaceship.rotate(ROTATION * delta);
+        if (x < -JOYSTICK_DEADZONE && !paused) {
+
+            if (!coop) spaceships[0].rotate(-ROTATION * delta);
+            else spaceships[1].rotate(-ROTATION * delta);
+
+        } else if (x > JOYSTICK_DEADZONE) {
+
+            if (!coop) spaceships[0].rotate(ROTATION * delta);
+            else spaceships[1].rotate(ROTATION * delta);
         }
 
         // These are PS4 specific rn
-        spaceship.toggleEngineC(sf::Joystick::isButtonPressed(0, 7)); // R2-Button
+        if (!coop) spaceships[0].toggleEngineC(sf::Joystick::isButtonPressed(0, 7)); // R2-Button
+        else spaceships[1].toggleEngineC(sf::Joystick::isButtonPressed(0, 7)); // R2-Button
 
         bool xButtonPressed = sf::Joystick::isButtonPressed(0, 0); // X-Button
         if (xButtonPressed && !shot) {
-            spaceship.shoot();
+            if (!coop) spaceships[0].shoot();
+            else spaceships[1].shoot();
             shot = true;
         }
         if (!xButtonPressed) {
             shot = false;
+        }
+
+        // Check inputs for the second controller (ID 1)
+        if (sf::Joystick::isConnected(1) && coop) {
+            // left stick
+            float x2 = sf::Joystick::getAxisPosition(1, sf::Joystick::X);
+
+            if (x2 < -JOYSTICK_DEADZONE && !paused) {
+                spaceships[2].rotate(-ROTATION * delta);
+            } else if (x2 > JOYSTICK_DEADZONE) {
+                spaceships[2].rotate(ROTATION * delta);
+            }
+
+            // These are PS4 specific rn
+            spaceships[2].toggleEngineC(sf::Joystick::isButtonPressed(1, 7)); // R2-Button
+
+            bool xButtonPressed2 = sf::Joystick::isButtonPressed(1, 0); // X-Button
+            static bool shot2 = false;
+            if (xButtonPressed2 && !shot2) {
+                spaceships[2].shoot();
+                shot2 = true;
+            }
+            if (!xButtonPressed2) {
+                shot2 = false;
+            }
         }
     }
 }

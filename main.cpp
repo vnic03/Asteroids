@@ -6,6 +6,7 @@
 #include "logic/logic.h"
 #include "scenes/Scenes.h"
 
+
 // Game-Sounds
 sf::SoundBuffer bBeat1, bBeat2, bSmallEx, bMediumEx, bBigEx, bFire, bThrust, bEx,
     bAlienB, bAlienS, bGameOver;
@@ -60,7 +61,7 @@ int main() {
         !loadSound(bBeat2, sBeat2, "beat2.wav") ||
         !loadSound(bEx, sEx, "spaceship-explosion.wav") ||
         !loadSound(bAlienB, sAlienB, "alien-big.wav") ||
-        !loadSound(bAlienS,sAlienS, "alien-small.wav") ||
+        !loadSound(bAlienS, sAlienS, "alien-small.wav") ||
         !loadSound(bGameOver, sGameOver, "game-over.wav"))
     {
         return 1;
@@ -70,35 +71,58 @@ int main() {
 
     // Game-Loop
     GameState state = GameState::START_SCREEN;
-    int score = 0;
-    std::string player;
+    int score = 0, score2 = 0;
+    std::string player1, player2;
 
     while (window.isOpen()) {
         sf::Event event{ };
         while (window.pollEvent(event)) {
             if (event.type == sf::Event::Closed)  window.close();
         }
+
         switch (state) {
+
             case GameState::START_SCREEN:
-                if (startScreen(window, font)) state = GameState::CHOOSE_NAME;
-                else window.close();
+                if (startScreen(window, font)) {
+                    state = chooseGameMode(window, font);
+
+                } else window.close();
                 break;
-            case GameState::CHOOSE_NAME:
-            {
-                std::string name = chooseName(window, font);
-                if (!name.empty()) {
-                    player = name; state = GameState::RUNNING;
+
+                case GameState::CHOOSE_NAME: {
+                if (window.getSize().x > SIZE_X || window.getSize().y > SIZE_Y) {
+                    window.setSize(sf::Vector2u(SIZE_X, SIZE_Y));
+                }
+                player1 = chooseName(window, font);
+                if (!player1.empty()) {
+                    state = GameState::RUNNING;
                 } else return 0;
-            }
                 break;
+            }
+
+            case GameState::COOP_CHOOSE_NAME: {
+                window.setSize(sf::Vector2u(SIZE_X + 250, SIZE_Y + 100));
+                auto names = chooseNames(window, font);
+                player1 = names.first;
+                player2 = names.second;
+                if (!player1.empty() && !player2.empty()) {
+                    state = GameState::COOP_RUNNING;
+                } else return 0;
+                break;
+            }
+
             case GameState::RUNNING:
-                score = runGame(window, font, state);
+            case GameState::COOP_RUNNING:
+                score = runGame(window, font, state, score, score2);
                 state = GameState::GAME_OVER;
                 break;
+
             case GameState::GAME_OVER:
                 sAlienS.stop(); sAlienB.stop();
-                gameOver(window, score, font, state, player);
-                state = GameState::CHOOSE_NAME;
+                // TODO: change gameOver method for coop mode,
+                //  sodass bide scores returned werden
+                gameOver(window, score, font, state, player1);
+                state = chooseGameMode(window, font);
                 break;
         }
     }

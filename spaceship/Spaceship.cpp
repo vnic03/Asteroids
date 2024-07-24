@@ -1,11 +1,8 @@
 #include "Spaceship.h"
-#include "../GameConstants.h"
 
-#include <cstdlib>
-#include <cmath>
 
-//
-SpaceShip::SpaceShip() {
+// SpaceShip class
+SpaceShip::SpaceShip(int id) : id(id) {
     lives = 3;
     initShape();
     initEngineShape();
@@ -13,6 +10,9 @@ SpaceShip::SpaceShip() {
     invincible = true;
     invincibleTimer.restart();
 }
+
+SpaceShip::SpaceShip() : SpaceShip(0) { }
+
 
 void SpaceShip::draw(sf::RenderWindow &window) {
     if (!explosion) {
@@ -28,16 +28,16 @@ void SpaceShip::draw(sf::RenderWindow &window) {
             sf::CircleShape circle(projectile.radius);
             circle.setPosition(projectile.position - sf::Vector2f(
                     projectile.radius, projectile.radius));
-            circle.setFillColor(sf::Color::White);
+            circle.setFillColor(projectile.color);
             window.draw(circle);
         }
     } else { // Draw explosion fragments as lines
         for (const auto& fragment : fragments) {
             sf::Vertex line[] = {
-                    sf::Vertex(fragment.position, sf::Color::White),
+                    sf::Vertex(fragment.position, WHITE),
                     sf::Vertex(fragment.position +
                         fragment.direction *
-                        10.f, sf::Color::White)
+                        10.f, fragment.color)
             };
             window.draw(line, 2, sf::Lines);
         }
@@ -142,7 +142,8 @@ void SpaceShip::initShape() {
 
     shape.setPosition(SIZE_X / 2.f, SIZE_Y / 2.f);
 
-    shape.setOutlineColor(sf::Color::White);
+    shape.setOutlineColor(handleColor());
+
     shape.setFillColor(sf::Color::Transparent);
     shape.setOutlineThickness(1.5f);
     shape.setRotation(180);
@@ -159,7 +160,7 @@ void SpaceShip::initEngineShape() {
     engine.setPoint(
             2, sf::Vector2f(0, -8 + std::rand() % 6 - 3));
 
-    engine.setFillColor(sf::Color::White);
+    engine.setFillColor(handleColor());
 }
 
 void SpaceShip::explode() {
@@ -176,19 +177,21 @@ void SpaceShip::explode() {
         sf::Vector2f direction(std::cos(angle), std::sin(angle));
         auto speed = static_cast<float>(std::rand() % 50 + 50);
 
-        fragments.emplace_back(center, direction, speed);
+        fragments.emplace_back(center, direction, speed, handleColor());
     }
     lives--; // Decrease lives by 1 after explosion (getting destroyed)
 }
 
 void SpaceShip::respawn() {
-    explosion = false;
-    // Reset spaceship position at the middle
-    shape.setPosition(SIZE_X / 2.f, SIZE_Y / 2.f);
-    velocity = sf::Vector2f(0, 0);
+    if (lives > 0) {
+        explosion = false;
+        // Reset spaceship position at the middle
+        shape.setPosition(SIZE_X / 2.f, SIZE_Y / 2.f);
+        velocity = sf::Vector2f(0, 0);
 
-    invincible = true;
-    invincibleTimer.restart();
+        invincible = true;
+        invincibleTimer.restart();
+    }
 }
 
 void SpaceShip::shoot(std::optional<sf::Vector2f> pos) {
@@ -198,7 +201,7 @@ void SpaceShip::shoot(std::optional<sf::Vector2f> pos) {
     auto angle = static_cast<float>((shape.getRotation() + 90) * M_PI / 180.0);
     sf::Vector2f direction(std::cos(angle), std::sin(angle));
 
-    projectiles.emplace_back(startPos, direction);
+    projectiles.emplace_back(startPos, direction, handleColor());
 
     velocity += direction * (-RECOIL); // recoil
 

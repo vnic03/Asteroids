@@ -10,8 +10,15 @@
 #include "../spaceship/Spaceship.h"
 #include "../alien/Alien.h"
 
+
 // Main game loop: handles game logic, rendering, and user input
-int runGame(sf::RenderWindow &window, const sf::Font& font, GameState& state);
+int runGame(sf::RenderWindow &window, const sf::Font& font, GameState& state,
+            int &score, int &score2);
+
+// Handles each Players controller input
+void handlePlayerInput(SpaceShip& spaceship, float delta,
+                       sf::Keyboard::Key left, sf::Keyboard::Key right,
+                       sf::Keyboard::Key thrust, sf::Keyboard::Key fire);
 
 // Checks for collision between two circular objects
 bool checkCollision(const sf::Shape& object1, float radius1,
@@ -30,15 +37,16 @@ void addAlien(std::vector<std::unique_ptr<Alien>>& aliens, AlienSize size,
               float delta);
 
 // Draws the current score on the screen
-void drawScore(sf::RenderWindow &window, int score);
-
-// Draws a single digit of the score on the screen at the specified position
-void drawNumber(sf::RenderWindow &window, int n, sf::Vector2f pos);
+void drawScore(sf::RenderWindow &window, int id, int score);
 
 // Draws the remaining lives of the spaceship on the screen
-void drawLives(sf::RenderWindow &window, const SpaceShip& spaceship);
+void drawLives(sf::RenderWindow &window, const SpaceShip& spaceship, int y = 28);
+
+// For Coop (calls drawLives method twice, with different y-offset)
+void drawLivesCoop(sf::RenderWindow &window, const SpaceShip* spaceships);
 
 // Handles user input for controlling the spaceship with a Controller
-void controllerInput(SpaceShip& spaceship, bool& paused, float delta);
+void controllerInput(SpaceShip* spaceships, bool& paused, float delta, bool& coop);
+
 
 #endif //ASTEROIDS_LOGIC_H

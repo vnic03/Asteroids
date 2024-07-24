@@ -13,6 +13,14 @@ existing one from the list.
 ![Choose Name](assets/gameplay/choose-name.png)
 *Choose your name and make it to the top of the leaderboard!*
 
+### New Feature: Co-op Mode
+
+Now you can play together with a friend in the same round! 
+
+![COOP](assets/gameplay/coop.png)
+*COOP*
+
+
 ### Highscores
 Compete against yourself or friends by beating highscores! Each name has 
 its own highscore, making it fun to try and top the leaderboard.

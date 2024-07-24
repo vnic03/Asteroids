@@ -3,21 +3,25 @@
 
 #include <SFML/Graphics.hpp>
 #include <cmath>
-
+#include <cstdlib>
 #include "../MovableEntity.h"
+
 
 // Represents a fragment of an explosion, seen as lines in game
 struct ExplosionFragment {
     sf::Vector2f position;
     sf::Vector2f direction;
     float speed;
+    sf::Color color;
 
-    ExplosionFragment(sf::Vector2f pos, sf::Vector2f dir, float speed)
-            : position(pos), direction(dir), speed(speed) { }
+    ExplosionFragment(sf::Vector2f pos, sf::Vector2f dir, float speed, sf::Color color)
+            : position(pos), direction(dir), speed(speed), color(color) { }
 };
 
 class SpaceShip : public MovableEntity {
 public:
+    explicit SpaceShip(int id = 0);
+    int id; // id to differ between single and coop mode
     sf::ConvexShape engine; // engine shape
 
     // Engine on/off flags - for keyboard and controller
@@ -54,6 +58,21 @@ public:
     void toggleEngine(bool active);
     // for Controller
     void toggleEngineC(bool active);
+
+    // Single-Player: White
+    // COOP: Player 1 gets Red and Player 2 gets Cyan
+     sf::Color handleColor() const {
+        sf::Color color = WHITE;
+        switch (id) {
+            case 1:
+                color = PLAYER_1_COLOR;
+                break;
+            case 2:
+                color = PLAYER_2_COLOR;
+                break;
+        }
+        return color;
+    }
 
 private:
     void initShape() override;

@@ -6,12 +6,15 @@
 #include <SFML/Audio/SoundBuffer.hpp>
 #include <SFML/Audio.hpp>
 
+
 // Tracks the current state of the game
 enum class GameState {
     START_SCREEN,
     CHOOSE_NAME,
     RUNNING,
-    GAME_OVER
+    GAME_OVER,
+    COOP_CHOOSE_NAME,
+    COOP_RUNNING
 };
 
 // Window-Size
@@ -19,10 +22,51 @@ const int SIZE_X = 900;
 const int SIZE_Y = 700;
 
 // Space-Ship
+// TODO: werte muessen im coop modus angepasst werden
 const float MOVE_SPEED = 250.f;
 const float ROTATION = 320.f;
 const float DRAG = 0.2f;
 const float RECOIL = 12.5f;
+
+/*
+    Controls
+*/
+const sf::Keyboard::Key PAUSE = sf::Keyboard::Key::P;
+
+// Single-Player and Player 1
+const sf::Keyboard::Key UP = sf::Keyboard::Key::W;
+const sf::Keyboard::Key LEFT = sf::Keyboard::Key::A;
+const sf::Keyboard::Key RIGHT = sf::Keyboard::Key::D;
+const sf::Keyboard::Key SHOOT = sf::Keyboard::Key::Space;
+// COOP Player 2
+const sf::Keyboard::Key COOP_UP = sf::Keyboard::Key::Up;
+const sf::Keyboard::Key COOP_LEFT = sf::Keyboard::Key::Left;
+const sf::Keyboard::Key COOP_RIGHT = sf::Keyboard::Key::Right;
+const sf::Keyboard::Key COOP_SHOOT = sf::Keyboard::Key::RControl;
+
+
+// COLORS
+inline const sf::Color& white() {
+    static const sf::Color white = sf::Color::White;
+    return white;
+}
+inline const sf::Color& player1Color() {
+    static const sf::Color player1Color = sf::Color::Red;
+    return player1Color;
+}
+inline const sf::Color& player2Color() {
+    static const sf::Color player2Color = sf::Color::Cyan;
+    return player2Color;
+}
+// Single-Player
+const sf::Color WHITE = white();
+// COOP
+const sf::Color PLAYER_1_COLOR = player1Color();
+const sf::Color PLAYER_2_COLOR = player2Color();
+
+
+// Size Of The Numbers
+const float NUMBER_SCALE = 30.f;
 
 // Score-Numbers
 const std::vector<std::vector<sf::Vector2f>> NUMBER_LINES = {
@@ -70,9 +114,6 @@ const std::vector<std::vector<sf::Vector2f>> NUMBER_LINES = {
             {0.1, 0}, {0.1, 0.4}, {0.1, 0.4}, {0.9, 0.4}
         }
 };
-
-// Size Of The Numbers
-const float SCALE = 30.f;
 
 // Game-Sounds
 extern sf::SoundBuffer bBeat1, bBeat2, bSmallEx, bMediumEx, bBigEx, bFire,

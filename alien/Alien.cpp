@@ -1,5 +1,6 @@
 #include "Alien.h"
 
+
 Alien::Alien(AlienSize size) : alienSize(size) {
     float startX; float startY;
 
@@ -59,7 +60,7 @@ void Alien::draw(sf::RenderWindow &window) {
     for (const auto& p : projectiles) {
         sf::CircleShape circle(p.radius);
         circle.setPosition(p.position - sf::Vector2f(p.radius, p.radius));
-        circle.setFillColor(sf::Color::White);
+        circle.setFillColor(p.color);
         window.draw(circle);
     }
 }
@@ -125,7 +126,7 @@ void Alien::shoot(std::optional<sf::Vector2f> playerPos) {
             }
             // projectile velocity
             float pVel = alienSize == AlienSize::BIG ? 80.f : 120.f;
-            projectiles.emplace_back(startPos, direction, pVel, radius);
+            projectiles.emplace_back(startPos, direction, WHITE, pVel, radius);
         }
         shootTimer.restart();
         sFire.play();
@@ -146,8 +147,8 @@ void Alien::initShape() {
     float angle = 2 * M_PI / NUM_POINTS;
 
     for (int i = 0; i < NUM_POINTS; ++i) {
-        float x = cos(angle * i) * r;
-        float y = sin(angle * i) * r_y;
+        float x = cosf(angle * i) * r;
+        float y = sinf(angle * i) * r_y;
         shape.setPoint(i, sf::Vector2f(x, y));
     }
 
@@ -156,7 +157,7 @@ void Alien::initShape() {
     line.setSize(sf::Vector2f(lineLength, thickness));
     line.setOrigin(lineLength / 2, thickness / 2);
 
-    shape.setOutlineColor(sf::Color::White);
+    shape.setOutlineColor(WHITE);
     shape.setFillColor(sf::Color::Transparent);
     shape.setOutlineThickness(1.5f);
 
@@ -172,6 +173,6 @@ void Alien::initShape() {
     cockpit.setPoint(3, sf::Vector2f(-cockpitWidthBottom / 2, 0));
 
     cockpit.setFillColor(sf::Color::Transparent);
-    cockpit.setOutlineColor(sf::Color::White);
+    cockpit.setOutlineColor(WHITE);
     cockpit.setOutlineThickness(1.5f);
 }

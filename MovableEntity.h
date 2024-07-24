@@ -14,12 +14,13 @@ struct Projectile {
     sf::Vector2f direction;
     float speed;
     float radius;
+    sf::Color color;
 
     // Tracks the duration a projectile remains active
     sf::Clock lifetime;
 
-    Projectile(sf::Vector2f pos, sf::Vector2f dir, float spd = 500.f, float rad = 2.f)
-            : position(pos), direction(dir), speed(spd), radius(rad) {
+    Projectile(sf::Vector2f pos, sf::Vector2f dir, sf::Color color, float spd = 500.f, float rad = 2.f)
+            : position(pos), direction(dir), color(color), speed(spd), radius(rad) {
 
         // Normalize Direction
         float length = std::sqrt(dir.x * dir.x + dir.y * dir.y);

@@ -8,10 +8,10 @@ fi
 
 cd $BUILD
 
-cmake ..
-make
-
-if [ $? -eq 0 ]; then
-  echo "Done! Have fun :)"
-  ./Asteroids
+if cmake .. && make; then
+  if ./Asteroids; then
+    echo "Done! Have fun :)"
+  fi
+else
+  echo "Mmh.. something went wrong :("
 fi

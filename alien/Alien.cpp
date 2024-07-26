@@ -6,7 +6,7 @@ Alien::Alien(AlienSize size) : alienSize(size) {
 
     if (size == AlienSize::BIG) {
         shootInterval = 3.f; // 3 sec
-        lives = 3;
+        lives = 6;
 
         // Randomly choose a side to spawn the alien
         int side = std::rand() % 4;
@@ -42,7 +42,7 @@ Alien::Alien(AlienSize size) : alienSize(size) {
     } else { // SMALL
         velocity = sf::Vector2f(100.f, 0.f);
         shootInterval = 1.5f;
-        lives = 1;
+        lives = 2;
     }
     initShape();
 }
@@ -65,7 +65,7 @@ void Alien::draw(sf::RenderWindow &window) {
     }
 }
 
-void Alien::update(float delta) {
+void Alien::update(float delta, bool sound) {
     sf::Vector2f pos = shape.getPosition();
     pos += velocity * delta; // Update position based on velocity and time
 
@@ -99,7 +99,7 @@ void Alien::update(float delta) {
     cockpit.setPosition(pos.x, pos.y + cockpitOffsetY);
 }
 
-void Alien::shoot(std::optional<sf::Vector2f> playerPos) {
+void Alien::shoot(bool sound, std::optional<sf::Vector2f> playerPos) {
     if (shootTimer.getElapsedTime().asSeconds() > shootInterval) {
         sf::Vector2f startPos = shape.getPosition();
 
@@ -129,13 +129,13 @@ void Alien::shoot(std::optional<sf::Vector2f> playerPos) {
             projectiles.emplace_back(startPos, direction, WHITE, pVel, radius);
         }
         shootTimer.restart();
-        sFire.play();
+        if (sound) sFire.play();
     }
 }
 
-void Alien::explode() {
+void Alien::explode(bool sound) {
     explosion = true;
-    sEx.play();
+    if (sound) sEx.play();
 }
 
 // Creates the shape of the alien, hexagon with a trapezoid cockpit

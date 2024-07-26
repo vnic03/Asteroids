@@ -45,7 +45,7 @@ void SpaceShip::draw(sf::RenderWindow &window) {
     }
 }
 
-void SpaceShip::update(float delta) {
+void SpaceShip::update(float delta, bool sound) {
     // Show Explosion fragments for 2 seconds, then respawn
     if (explosion) {
         for (auto& fragment : fragments) {
@@ -62,7 +62,7 @@ void SpaceShip::update(float delta) {
     }
 
     if (engineOn || engineOnC) {
-        sThrust.play(); // play thrust sound
+        if (sound) sThrust.play(); // play thrust sound
 
         float angle = shape.getRotation() - 90;
         // convert angle to radian
@@ -164,8 +164,8 @@ void SpaceShip::initEngineShape() {
     engine.setFillColor(handleColor());
 }
 
-void SpaceShip::explode() {
-    sEx.play(); // Play explosion sound
+void SpaceShip::explode(bool sound) {
+    if (sound) sEx.play(); // Play explosion sound
     explosion = true;
     respawnTime.restart();
 
@@ -195,7 +195,7 @@ void SpaceShip::respawn() {
     }
 }
 
-void SpaceShip::shoot(std::optional<sf::Vector2f> pos) {
+void SpaceShip::shoot(bool sound, std::optional<sf::Vector2f> pos) {
     // No need for parameter pos, because spaceship shoots in the direction it is facing
     sf::Vector2f startPos = shape.getPosition();
 
@@ -206,5 +206,5 @@ void SpaceShip::shoot(std::optional<sf::Vector2f> pos) {
 
     velocity += direction * (-RECOIL); // recoil
 
-    sFire.play(); // play shooting sound
+    if (sound) sFire.play(); // play shooting sound
 }

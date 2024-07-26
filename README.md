@@ -53,6 +53,7 @@ Controller, offering a flexible arcade experience.
 - **Space:** Shoot
 - **Enter:** Start the game
 - **P:** Pause the game
+- **M:** Turn Sounds on/off
 - **Esc:** Exit the game
 
 ### Controller Controls:

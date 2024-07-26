@@ -4,6 +4,7 @@
 std::pair<int, int> runGame(sf::RenderWindow &window, const sf::Font& font,
                             GameState& state, int &score, int &score2)
 {
+    bool sound = true; // tracks if sound is playing
     bool paused = false; // tracks if the game is running or paused
 
     sf::Clock clock; // Game loop clock
@@ -43,19 +44,20 @@ std::pair<int, int> runGame(sf::RenderWindow &window, const sf::Font& font,
         float delta = elapsed.asSeconds();
 
         // Stop alien sounds after 1.8 seconds
-        if (alienBTimer.getElapsedTime().asSeconds() > 1.8) {
-            sAlienB.stop();
-            sAlienB.setLoop(false);
-        }
-        if (alienSTimer.getElapsedTime().asSeconds() > 1.8) {
-            sAlienS.stop();
-            sAlienS.setLoop(false);
+        if (sound) {
+            if (alienBTimer.getElapsedTime().asSeconds() > 1.8) {
+                sAlienB.stop();
+                sAlienB.setLoop(false);
+            }
+            if (alienSTimer.getElapsedTime().asSeconds() > 1.8) {
+                sAlienS.stop();
+                sAlienS.setLoop(false);
+            }
         }
 
         sf::Event event{ };
         while (window.pollEvent(event)) {
             if (event.type == sf::Event::Closed) window.close();
-
             if (event.type == sf::Event::KeyPressed) {
                 if (event.key.code == SHOOT) {
                     if (!paused) {
@@ -69,6 +71,9 @@ std::pair<int, int> runGame(sf::RenderWindow &window, const sf::Font& font,
 
                 } else if (event.key.code == PAUSE) {
                     paused = !paused;
+
+                } else if (event.key.code == SOUND) {
+                    sound = !sound;
                 }
             }
         }
@@ -113,7 +118,7 @@ std::pair<int, int> runGame(sf::RenderWindow &window, const sf::Font& font,
                 alienSpawnTimer.getElapsedTime().asSeconds() > nextAlienSpawnTime)
             {
                 AlienSize size = (aliensSpawned % 2 == 0) ? AlienSize::BIG : AlienSize::SMALL;
-                addAlien(aliens, size, delta);
+                addAlien(aliens, size, delta, sound);
 
                 aliensSpawned++;
                 alienSpawnTimer.restart();
@@ -126,22 +131,22 @@ std::pair<int, int> runGame(sf::RenderWindow &window, const sf::Font& font,
             // Controls
             if (!coop) {
                 if (!spaceships[0].explosion) {
-                    controllerInput(spaceships, paused, delta, coop);
-                    handlePlayerInput(spaceships[0], delta, LEFT, RIGHT, UP, SHOOT);
+                    controllerInput(spaceships, paused, delta, coop, sound);
+                    handlePlayerInput(spaceships[0], delta, sound, LEFT, RIGHT, UP, SHOOT);
                 }
-                spaceships[0].update(delta);
+                spaceships[0].update(delta, sound);
 
             } else {
                 if (!spaceships[1].explosion) {
-                    controllerInput(spaceships, paused, delta, coop);
-                    handlePlayerInput(spaceships[1], delta, LEFT, RIGHT, UP, SHOOT);
+                    controllerInput(spaceships, paused, delta, coop, sound);
+                    handlePlayerInput(spaceships[1], delta, sound,LEFT, RIGHT, UP, SHOOT);
                 }
                 if (!spaceships[2].explosion) {
-                    controllerInput(spaceships, paused, delta, coop);
-                    handlePlayerInput(spaceships[2], delta, COOP_LEFT, COOP_RIGHT, COOP_UP, COOP_SHOOT);
+                    controllerInput(spaceships, paused, delta, coop, sound);
+                    handlePlayerInput(spaceships[2], delta, sound, COOP_LEFT, COOP_RIGHT, COOP_UP, COOP_SHOOT);
                 }
-                spaceships[1].update(delta);
-                spaceships[2].update(delta);
+                spaceships[1].update(delta, sound);
+                spaceships[2].update(delta, sound);
             }
 
             window.clear(sf::Color::Black);
@@ -153,13 +158,13 @@ std::pair<int, int> runGame(sf::RenderWindow &window, const sf::Font& font,
             }
 
             if (!coop) {
-                updateAsteroids(asteroids, spaceships[0], delta, score, level);
-                updateAliens(aliens, spaceships[0], delta, score);
+                updateAsteroids(asteroids, spaceships[0], delta, score, level, sound);
+                updateAliens(aliens, spaceships[0], delta, score, sound);
             } else {
-                updateAsteroids(asteroids, spaceships[1], delta, score, level);
-                updateAliens(aliens, spaceships[1], delta, score);
-                updateAsteroids(asteroids, spaceships[2], delta, score2, level);
-                updateAliens(aliens, spaceships[2], delta, score2);
+                updateAsteroids(asteroids, spaceships[1], delta, score, level, sound);
+                updateAliens(aliens, spaceships[1], delta, score, sound);
+                updateAsteroids(asteroids, spaceships[2], delta, score2, level, sound);
+                updateAliens(aliens, spaceships[2], delta, score2, sound);
             }
 
             for (auto &asteroid: asteroids) {
@@ -208,17 +213,17 @@ std::pair<int, int> runGame(sf::RenderWindow &window, const sf::Font& font,
         }
 
         if (beat.getElapsedTime().asSeconds() > beatInterval) {
-            playBeat(sBeat1, sBeat2);
+            playBeat(sBeat1, sBeat2, sound);
             beat.restart();
         }
 
         window.display();
     }
 
-    return coop ? std::make_pair(score, score2) : std::make_pair(score, 0);
+    return coop ? std::make_pair(score, score2) : std::make_pair(score, -1);
 }
 
-void handlePlayerInput(SpaceShip& spaceship, float delta,
+void handlePlayerInput(SpaceShip& spaceship, float delta, bool sound,
                        sf::Keyboard::Key left, sf::Keyboard::Key right,
                        sf::Keyboard::Key thrust, sf::Keyboard::Key fire)
 {
@@ -230,7 +235,7 @@ void handlePlayerInput(SpaceShip& spaceship, float delta,
     }
     spaceship.toggleEngine(sf::Keyboard::isKeyPressed(thrust));
     if (sf::Keyboard::isKeyPressed(fire) && !spaceship.keyClicked) {
-        spaceship.shoot();
+        spaceship.shoot(sound);
         spaceship.keyClicked = true;
     }
 }
@@ -259,7 +264,7 @@ bool checkCollision(const sf::Vector2f& point1, float radius1,
 }
 
 void updateAsteroids(std::vector<std::unique_ptr<Asteroid>>& asteroids,
-                     SpaceShip& spaceship, float delta, int &score, int &level)
+                     SpaceShip& spaceship, float delta, int &score, int &level, bool sound)
 {
     for (auto& asteroid : asteroids) {
         asteroid->shape.move(asteroid->velocity * delta);
@@ -280,7 +285,7 @@ void updateAsteroids(std::vector<std::unique_ptr<Asteroid>>& asteroids,
             checkCollision(spaceship.shape,spaceship.radius,
                            asteroid->shape, asteroidRadius))
         {
-            spaceship.explode();
+            spaceship.explode(sound);
         }
     }
 
@@ -305,13 +310,16 @@ void updateAsteroids(std::vector<std::unique_ptr<Asteroid>>& asteroids,
 
                     switch (size) {
                         case AsteroidSize::BIG:
-                            score += 20, sSmallEx.play();
+                            score += 20;
+                            if (sound) sSmallEx.play();
                             break;
                         case AsteroidSize::MEDIUM:
-                            score += 50, sMediumEx.play();
+                            score += 50;
+                            if (sound) sMediumEx.play();
                             break;
                         case AsteroidSize::SMALL:
-                            score += 100, sBigEx.play();
+                            score += 100;
+                            if (sound) sBigEx.play();
                             break;
                     }
                     sf::Vector2f oldPosition = (*a_it)->shape.getPosition();
@@ -352,7 +360,7 @@ void updateAsteroids(std::vector<std::unique_ptr<Asteroid>>& asteroids,
 }
 
 void updateAliens(std::vector<std::unique_ptr<Alien>>& aliens,
-                  SpaceShip& spaceship, float delta, int &score)
+                  SpaceShip& spaceship, float delta, int &score, bool sound)
 {
     for (auto& alien : aliens) {
         alien->projectiles.erase(
@@ -367,14 +375,14 @@ void updateAliens(std::vector<std::unique_ptr<Alien>>& aliens,
                 ),
                 alien->projectiles.end()
         );
-        alien->update(delta);
+        alien->update(delta, sound);
 
         if (!spaceship.explosion && !spaceship.invincible &&
             checkCollision(spaceship.shape, spaceship.radius,
                            alien->shape, alien->shape.getGlobalBounds().width / 2))
         {
-            spaceship.explode();
-            alien->explode();
+            spaceship.explode(sound);
+            alien->explode(sound);
         }
 
         auto& projectiles = spaceship.projectiles;
@@ -387,7 +395,7 @@ void updateAliens(std::vector<std::unique_ptr<Alien>>& aliens,
                                alien->shape.getGlobalBounds().width / 2))
             {
                 hit = true;
-                alien->takeDamage();
+                alien->takeDamage(sound);
                 p_it = projectiles.erase(p_it);
 
                 score += (alien->alienSize == AlienSize::BIG) ? 200 : 1000;
@@ -399,7 +407,7 @@ void updateAliens(std::vector<std::unique_ptr<Alien>>& aliens,
             if (!spaceship.explosion && !spaceship.invincible &&
                 checkCollision(p.position, p.radius, spaceship.shape.getPosition(), spaceship.radius))
             {
-                spaceship.explode();
+                spaceship.explode(sound);
                 break;
             }
         }
@@ -413,24 +421,24 @@ void updateAliens(std::vector<std::unique_ptr<Alien>>& aliens,
     ), aliens.end());
 
     for (auto& alien : aliens) {
-        alien->shoot(spaceship.shape.getPosition());
+        alien->shoot(sound, spaceship.shape.getPosition());
     }
 }
 
-void addAlien(std::vector<std::unique_ptr<Alien>>& aliens, AlienSize size, float delta)
+void addAlien(std::vector<std::unique_ptr<Alien>>& aliens, AlienSize size, float delta, bool sound)
 {
     auto alien = std::make_unique<Alien>(size);
-    alien->update(delta);
+    alien->update(delta, sound);
     aliens.push_back(std::move(alien));
 
     if (size == AlienSize::BIG) {
         sAlienB.setLoop(true);
-        sAlienB.play();
+        if (sound) sAlienB.play();
         alienBTimer.restart();
     }
     if (size == AlienSize::SMALL) {
         sAlienS.setLoop(true);
-        sAlienS.play();
+        if (sound) sAlienS.play();
         alienSTimer.restart();
     }
 }
@@ -506,7 +514,7 @@ void drawLivesCoop(sf::RenderWindow &window, const SpaceShip* spaceships) {
 // Handles the input from a single game controller
 void handleControllerInput(SpaceShip& s, unsigned int id, float delta,
                            float joystickDeadzone, unsigned int move,
-                           unsigned int shoot, bool& shot, bool paused)
+                           unsigned int shoot, bool& shot, bool paused, bool sound)
 {
     float x = sf::Joystick::getAxisPosition(id, sf::Joystick::X);
 
@@ -517,13 +525,14 @@ void handleControllerInput(SpaceShip& s, unsigned int id, float delta,
 
     bool shootButtonPressed = sf::Joystick::isButtonPressed(id, shoot);
     if (shootButtonPressed && !shot) {
-        s.shoot();
+        s.shoot(sound);
         shot = true;
     }
     if (!shootButtonPressed)  shot = false;
 }
 
-void controllerInput(SpaceShip* spaceships, bool& paused, float delta, bool& coop) {
+void controllerInput(SpaceShip* spaceships, bool& paused, float delta, bool& coop, bool sound)
+{
     // These are PS4 specific rn
     const unsigned int CONTROLLER_ID = 0;
     const unsigned int SECOND_CONTROLLER_ID = 1;
@@ -538,10 +547,11 @@ void controllerInput(SpaceShip* spaceships, bool& paused, float delta, bool& coo
 
     if (sf::Joystick::isConnected(CONTROLLER_ID)) {
         handleControllerInput(coop ? spaceships[1] : spaceships[0],
-                              CONTROLLER_ID, delta, JOYSTICK_DEADZONE, R2_BUTTON, X_BUTTON, shot1, paused);
+                              CONTROLLER_ID, delta, JOYSTICK_DEADZONE, R2_BUTTON, X_BUTTON, shot1,
+                              paused, sound);
     }
     if (sf::Joystick::isConnected(SECOND_CONTROLLER_ID) && coop) {
         handleControllerInput(spaceships[2], SECOND_CONTROLLER_ID, delta,
-                              JOYSTICK_DEADZONE, R2_BUTTON, X_BUTTON, shot2, paused);
+                              JOYSTICK_DEADZONE, R2_BUTTON, X_BUTTON, shot2, paused, sound);
     }
 }

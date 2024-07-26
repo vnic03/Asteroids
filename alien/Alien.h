@@ -20,19 +20,19 @@ public:
 
     void draw(sf::RenderWindow &window) override;
 
-    void update(float delta) override;
+    void update(float delta, bool sound) override;
 
-    void shoot(std::optional<sf::Vector2f> playerPos = std::nullopt) override;
+    void shoot(bool sound, std::optional<sf::Vector2f> playerPos = std::nullopt) override;
 
     void initShape() override;
 
-    void explode() override;
+    void explode(bool sound) override;
 
     // Returns true if the alien is destroyed (has no lives left)
     bool isDestroyed() const { return lives <= 0; }
 
     // Reduces the alien's lives by 1 and explodes if it has no lives left
-    void takeDamage() { if (--lives <= 0) explode(); }
+    void takeDamage(bool sound) { if (--lives <= 0) explode(sound); }
 
 private:
     sf::Clock shootTimer; // Timer to track the time between shots

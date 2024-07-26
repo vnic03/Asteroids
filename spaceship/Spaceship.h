@@ -48,11 +48,11 @@ public:
 
     void draw(sf::RenderWindow &window) override;
 
-    void update(float delta) override;
+    void update(float delta, bool sound) override;
 
-    void shoot(std::optional<sf::Vector2f> pos = std::nullopt) override;
+    void shoot(bool sound, std::optional<sf::Vector2f> pos = std::nullopt) override;
 
-    void explode() override;
+    void explode(bool sound) override;
 
     // Makes the spaceship able to rotate
     void rotate(float delta);
@@ -66,7 +66,7 @@ public:
     // COOP: Player 1 gets Red and Player 2 gets Cyan
      sf::Color handleColor() const {
         return (id == 1) ? PLAYER_1_COLOR : ((id == 2) ? PLAYER_2_COLOR : WHITE);
-    }
+     }
 
 private:
     void initShape() override;

@@ -32,6 +32,9 @@ const float RECOIL = 12.5f;
 */
 const sf::Keyboard::Key PAUSE = sf::Keyboard::Key::P;
 
+// Turns Sound on/off when pressing M
+const sf::Keyboard::Key SOUND = sf::Keyboard::Key::M;
+
 // Single-Player and Player 1
 const sf::Keyboard::Key UP = sf::Keyboard::Key::W;
 const sf::Keyboard::Key LEFT = sf::Keyboard::Key::A;
@@ -124,7 +127,7 @@ sThrust, sEx, sAlienB, sAlienS, sGameOver;
 bool loadSound(sf::SoundBuffer& buffer, sf::Sound& sound, const std::string& file);
 
 // Alternates between playing two beat sounds to create a rhythmic background
-void playBeat(sf::Sound& beat1, sf::Sound& beat2);
+void playBeat(sf::Sound& beat1, sf::Sound& beat2, bool sound);
 
 // Timer to end loop of alien sound
 extern sf::Clock alienBTimer;

@@ -30,21 +30,22 @@ bool loadSound(sf::SoundBuffer& buffer, sf::Sound& sound, const std::string& fil
     return true;
 }
 
-void playBeat(sf::Sound& beat1, sf::Sound& beat2) {
+void playBeat(sf::Sound& beat1, sf::Sound& beat2, bool sound) {
     static bool playFirst = true;
-    if (playFirst) {
-        if (beat1.getStatus() != sf::Sound::Playing) {
-            beat1.play();
+    if (sound) {
+        if (playFirst) {
+            if (beat1.getStatus() != sf::Sound::Playing) {
+                beat1.play();
+            }
+        } else {
+            if (beat2.getStatus() != sf::Sound::Playing) {
+                beat2.play();
+            }
         }
-    } else {
-        if (beat2.getStatus() != sf::Sound::Playing) {
-            beat2.play();
-        }
+        playFirst = !playFirst;
     }
-    playFirst = !playFirst;
 }
 
-// Main function
 int main() {
     // Window
     sf::RenderWindow window(sf::VideoMode(SIZE_X, SIZE_Y), "Asteroids");

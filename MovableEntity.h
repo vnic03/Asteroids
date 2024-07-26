@@ -45,13 +45,13 @@ public:
     virtual void draw(sf::RenderWindow& window) = 0;
 
     // updates position and velocity of the entity
-    virtual void update(float delta) = 0;
+    virtual void update(float delta, bool sound) = 0;
 
     // shoots a projectile, optional target position for the Alien class
-    virtual void shoot(std::optional<sf::Vector2f> targetPos = std::nullopt) = 0;
+    virtual void shoot(bool sound, std::optional<sf::Vector2f> targetPos = std::nullopt) = 0;
 
     // makes the entity explode
-    virtual void explode() = 0;
+    virtual void explode(bool sound) = 0;
 
 protected:
     // initializes the shape of the entity

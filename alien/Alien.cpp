@@ -6,7 +6,7 @@ Alien::Alien(AlienSize size) : alienSize(size) {
 
     if (size == AlienSize::BIG) {
         shootInterval = 3.f; // 3 sec
-        lives = 6;
+        lives = 10;
 
         // Randomly choose a side to spawn the alien
         int side = std::rand() % 4;

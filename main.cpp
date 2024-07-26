@@ -11,10 +11,8 @@
 #define COOP_SIZE_Y (SIZE_Y + 100)
 
 // Game-Sounds
-sf::SoundBuffer bBeat1, bBeat2, bSmallEx, bMediumEx, bBigEx, bFire, bThrust, bEx,
-    bAlienB, bAlienS, bGameOver;
-sf::Sound sBeat1, sBeat2, sSmallEx, sMediumEx, sBigEx, sFire, sThrust, sEx,
-        sAlienB, sAlienS, sGameOver;
+sf::SoundBuffer bBeat1, bBeat2, bSmallEx, bMediumEx, bBigEx, bFire, bThrust, bEx, bAlienB, bAlienS, bGameOver;
+sf::Sound sBeat1, sBeat2, sSmallEx, sMediumEx, sBigEx, sFire, sThrust, sEx, sAlienB, sAlienS, sGameOver;
 
 // Timer to end loop of alien sound
 sf::Clock alienBTimer;
@@ -46,6 +44,7 @@ void playBeat(sf::Sound& beat1, sf::Sound& beat2, bool sound) {
     }
 }
 
+// Main-Function
 int main() {
     // Window
     sf::RenderWindow window(sf::VideoMode(SIZE_X, SIZE_Y), "Asteroids");

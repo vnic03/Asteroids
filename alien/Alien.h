@@ -24,8 +24,6 @@ public:
 
     void shoot(bool sound, std::optional<sf::Vector2f> playerPos = std::nullopt) override;
 
-    void initShape() override;
-
     void explode(bool sound) override;
 
     // Returns true if the alien is destroyed (has no lives left)
@@ -35,6 +33,8 @@ public:
     void takeDamage(bool sound) { if (--lives <= 0) explode(sound); }
 
 private:
+    void initShape() override;
+
     sf::Clock shootTimer; // Timer to track the time between shots
     float shootInterval; // Time between shots
 

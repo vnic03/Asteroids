@@ -396,9 +396,10 @@ void updateAliens(std::vector<std::unique_ptr<Alien>>& aliens,
             {
                 hit = true;
                 alien->takeDamage(sound);
+                if (alien->isDestroyed()) {
+                    score += (alien->alienSize == AlienSize::BIG) ? 200 : 1000;
+                }
                 p_it = projectiles.erase(p_it);
-
-                score += (alien->alienSize == AlienSize::BIG) ? 200 : 1000;
             } else {
                 ++p_it;
             }

@@ -534,7 +534,7 @@ void handleControllerInput(SpaceShip& s, unsigned int id, float delta,
 
 void controllerInput(SpaceShip* spaceships, bool& paused, float delta, bool& coop, bool sound)
 {
-    // These are PS4 specific rn
+    // These are Playstation specific rn
     const unsigned int CONTROLLER_ID = 0;
     const unsigned int SECOND_CONTROLLER_ID = 1;
 

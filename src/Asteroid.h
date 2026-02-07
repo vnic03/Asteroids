@@ -4,6 +4,8 @@
 #include <SFML/Graphics.hpp>
 #include <cstdlib>
 #include <cmath>
+#include <memory>
+#include <vector>
 
 #include "GameConstants.h"
 
@@ -22,8 +24,6 @@ public:
     AsteroidSize size;
     int hp;
 
-    // Different Size -> Different HP
-    // Each hp is one hit
     explicit Asteroid(AsteroidSize size) : size(size) {
         switch (size) {
             case AsteroidSize::BIG: hp = 4;

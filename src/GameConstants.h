@@ -18,8 +18,8 @@ enum class GameState {
 };
 
 // Window-Size
-const int SIZE_X = 900;
-const int SIZE_Y = 700;
+const int SIZE_X = 1460;
+const int SIZE_Y = 800;
 
 // Space-Ship
 const float MOVE_SPEED = 250.f;

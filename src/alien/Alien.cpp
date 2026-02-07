@@ -107,16 +107,18 @@ void Alien::shoot(bool sound, std::optional<sf::Vector2f> playerPos) {
         int shootCount = alienSize == AlienSize::BIG ? 3 : 4;
         float radius = alienSize == AlienSize::BIG ? 8.f : 5.f;
 
-        // Randomize the direction of the projectiles
         for (int i = 0; i < shootCount; i++) {
             sf::Vector2f direction;
 
+            // BIG shoots in random directions
             if (alienSize == AlienSize::BIG) {
                 auto randomAngle = static_cast<float>(
                         (std::rand() % 360) * (M_PI / 180.0)
                 );
                 direction = sf::Vector2f(std::cos(randomAngle), std::sin(randomAngle));
-            } else { // SMALL
+
+            // SMALL shoots directly at the player ship
+            } else {
                 if (playerPos) {
                     direction = *playerPos - startPos;
                     float length = std::sqrt(direction.x * direction.x +

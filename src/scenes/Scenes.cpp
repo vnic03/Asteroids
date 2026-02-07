@@ -437,17 +437,15 @@ std::string secure(const std::string& data, const unsigned long key) {
     srand(key);
 
     for (size_t i = 0; i < data.size(); i++) {
-        // random byte
         auto byte = static_cast<unsigned char>(rand() % 256);
-        // XOR it with the char
         result[i] = static_cast<char>(data[i] ^ byte);
     }
     return result;
 }
 
 std::vector<HighScore>readHighScores() {
-    Config config(".env");
     Config::createEnv(".env");
+    Config config(".env");
     auto key = config.getKey();
 
     std::vector<HighScore> scores;
@@ -469,8 +467,8 @@ std::vector<HighScore>readHighScores() {
 
 void writeHighScore(const std::string& name, int score) {
     try {
-        Config config(".env");
         Config::createEnv(".env");
+        Config config(".env");
         auto key = config.getKey();
 
         std::vector<HighScore> scores = readHighScores();

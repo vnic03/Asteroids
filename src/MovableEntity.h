@@ -59,7 +59,7 @@ protected:
 
     // keeps all entities in the screen
     template<typename T>
-    void wrapAroundScreen(T& t, sf::Vector2f pos) {
+    inline void wrapAroundScreen(T& t, sf::Vector2f pos) {
         if (pos.x < 0) pos.x += SIZE_X;
         else if (pos.x > SIZE_X) pos.x = 0;
 

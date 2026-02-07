@@ -1,4 +1,3 @@
-
 build/
 cmake-build-debug/
 cmake-build-release/
@@ -48,5 +47,5 @@ Makefile
 
 *.code-workspace
 
-.highscores.txt
+idea.txt
 .env

@@ -5,6 +5,8 @@
 #include <cmath>
 #include <SFML/Graphics/Shape.hpp>
 #include <sstream>
+#include <vector>
+#include <memory>
 
 #include "../Asteroid.h"
 #include "../spaceship/Spaceship.h"

@@ -68,7 +68,6 @@ Controller, offering a flexible arcade experience.
 
 - **Arrow Keys:** Navigate through the existing names list.
 - **Enter:** Select the highlighted name to start the game.
-- **Alt:** Save a new name to the list (after typing it).
 - **Del:** Deletes a player and it's highscore.
 
 ## Running the Game

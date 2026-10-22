@@ -7,7 +7,6 @@
 #include "../MovableEntity.h"
 
 
-// Represents a fragment of an explosion, seen as lines in game
 struct ExplosionFragment {
     sf::Vector2f position;
     sf::Vector2f direction;
@@ -25,26 +24,20 @@ public:
     // id to differ between single and coop mode
     int id; // 0: Single-Player, 1&2: Coop-Mode
 
-    sf::ConvexShape engine; // engine shape
+    sf::ConvexShape engine;
 
-    // Engine on/off flags - for keyboard and controller
     bool engineOn = false;
-    bool engineOnC = false;
+    bool engineOnC = false; // another flag for controller
 
     float radius = 10.f;
 
-    sf::Clock respawnTime; // respawn delay timer for spaceship
+    SimulationClock respawnTime;
+
+    SimulationClock invincibleTimer;
 
     std::vector<ExplosionFragment> fragments;
 
-    // Gives player time to get ready after respawn
     bool invincible = false;
-    sf::Clock invincibleTimer;
-
-    // Makes spamming the shooting key impossible
-    bool keyClicked = false;
-
-    SpaceShip();
 
     void draw(sf::RenderWindow &window) override;
 
@@ -54,13 +47,11 @@ public:
 
     void explode(bool sound) override;
 
-    // Makes the spaceship able to rotate
     void rotate(float delta);
 
-    // toggles the engine on and off
     void toggleEngine(bool active);
-    // for Controller
-    void toggleEngineC(bool active);
+
+    void toggleEngineC(bool active); // for controller
 
     // Single-Player: White
     // COOP: Player 1 gets Red and Player 2 gets Cyan
@@ -71,13 +62,11 @@ public:
 private:
     void initShape() override;
 
-    // initializes the shape of the engine.
     void initEngineShape();
 
     // makes the engine more realistic.
     void updateEngine();
 
-    // handles respawn
     void respawn();
 };
 

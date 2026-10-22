@@ -5,9 +5,9 @@
 #include <vector>
 #include <SFML/Audio/SoundBuffer.hpp>
 #include <SFML/Audio.hpp>
+#include "SimulationClock.h"
 
 
-// Tracks the current state of the game
 enum class GameState {
     START_SCREEN,
     CHOOSE_NAME,
@@ -66,11 +66,8 @@ const sf::Color WHITE = white();
 const sf::Color PLAYER_1_COLOR = player1Color();
 const sf::Color PLAYER_2_COLOR = player2Color();
 
-
-// Size Of The Numbers
 const float NUMBER_SCALE = 30.f;
 
-// Score-Numbers
 const std::vector<std::vector<sf::Vector2f>> NUMBER_LINES = {
         { // 0
             {0.2, 0}, {0.8, 0}, {0.8, 0}, {0.8, 0.8}, {0.8, 0.8}, {0.2, 0.8},
@@ -123,14 +120,19 @@ bThrust, bEx, bAlienB, bAlienS, bGameOver;
 extern sf::Sound sBeat1, sBeat2, sSmallEx, sMediumEx, sBigEx, sFire,
 sThrust, sEx, sAlienB, sAlienS, sGameOver;
 
-// Load sound from file
 bool loadSound(sf::SoundBuffer& buffer, sf::Sound& sound, const std::string& file);
 
 // Alternates between playing two beat sounds to create a rhythmic background
 void playBeat(sf::Sound& beat1, sf::Sound& beat2, bool sound);
 
-// Timer to end loop of alien sound
-extern sf::Clock alienBTimer;
-extern sf::Clock alienSTimer;
+extern SimulationClock alienBTimer;
+extern SimulationClock alienSTimer;
+
+extern bool soundEnabled;
+
+void playSound(sf::Sound& sound);
+
+void stopGameSounds();
+
 
 #endif //ASTEROIDS_GAMECONSTANTS_H

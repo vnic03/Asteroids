@@ -9,14 +9,12 @@
 
 #include "GameConstants.h"
 
-// Enum class to track the size of the asteroid
 enum class AsteroidSize {
     BIG,
     MEDIUM,
     SMALL
 };
 
-// Class to represent an asteroid
 class Asteroid {
 public:
     sf::ConvexShape shape;
@@ -35,19 +33,17 @@ public:
         }
     }
 
-    // Initializes a vector of unique Asteroid objects.
     static std::vector<std::unique_ptr<Asteroid>> initAsteroids(
             int amount, int &level)
     {
         std::vector<std::unique_ptr<Asteroid>> asteroids;
 
+        // TODO: add better balancing
         // Increase the amount of asteroids for higher levels
         // Starts at 4, Stops at 20
         if (level > 3 && amount <= 20) amount += 1;
 
-        // Create the asteroids
         for (int i = 0; i < amount; i++) {
-            // Randomly choose a size
             auto size = static_cast<AsteroidSize>(std::rand() % 3);
             auto asteroid = std::make_unique<Asteroid>(size);
             asteroid->initShape(level);
@@ -57,13 +53,12 @@ public:
     }
 
     void initShape(int &level) {
-        // Randomize the number of points
         const int points = 12 + std::rand() % 6;
         shape.setPointCount(points);
 
-        // Different Size -> Different Speed
-        float base; // Size of the asteroid
+        float base;
         float speed;
+
         switch (size) {
             case AsteroidSize::BIG:
                 base = 30.0f;
@@ -79,7 +74,8 @@ public:
                 break;
         }
 
-        float speedLevel; // Speed multiplier based on level
+        float speedLevel;
+        // TODO: add better balancing
         if (level <= 10) {
             // Up to level 10: Increase by 10% per level
             speedLevel = 1.f + (level - 1) * 0.1f;
@@ -92,7 +88,6 @@ public:
         }
         speed *= speedLevel;
 
-        // Create the asteroid shape
         for (int i = 0; i < points; i++) {
             float angle = (i * 360.0f / points) * (M_PI / 180.0f);
             float variation = 0.8f + static_cast<float>
@@ -107,7 +102,6 @@ public:
         }
         shape.setPosition(std::rand() % SIZE_X, std::rand() % SIZE_Y);
 
-        // Randomize the velocity
         float speedX = (std::rand() % 100 - 50) / 50.0f * speed;
         float speedY = (std::rand() % 100 - 50) / 50.0f * speed;
         velocity = sf::Vector2f(speedX, speedY);

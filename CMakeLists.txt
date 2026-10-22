@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.22.1)
 
 project(Asteroids)
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_executable(Asteroids src/main.cpp
         src/Asteroid.h                      # Header for asteroid entities
@@ -16,7 +17,9 @@ add_executable(Asteroids src/main.cpp
         src/MovableEntity.h                 # Base abstract class for spaceship and alien
         src/scenes/Scenes.h                 # Manages the logic and design of the scenes
         src/scenes/Scenes.cpp               # Implementation for logic and design
-        src/Config.cpp                      # Handles the .env file
+        src/HighScores.cpp
+        src/HighScores.h
+        src/SimulationClock.h
         )
 
 # SFML

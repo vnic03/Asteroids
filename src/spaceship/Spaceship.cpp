@@ -1,7 +1,5 @@
 #include "Spaceship.h"
 
-
-// SpaceShip class
 SpaceShip::SpaceShip(int id) : id(id) {
     lives = 3;
     initShape();
@@ -10,9 +8,6 @@ SpaceShip::SpaceShip(int id) : id(id) {
     invincible = true;
     invincibleTimer.restart();
 }
-
-SpaceShip::SpaceShip() : SpaceShip(0) { }
-
 
 void SpaceShip::draw(sf::RenderWindow &window) {
     if (!explosion) {
@@ -45,7 +40,7 @@ void SpaceShip::draw(sf::RenderWindow &window) {
     }
 }
 
-void SpaceShip::update(float delta, bool sound) {
+void SpaceShip::update(float delta, bool) {
     // Show Explosion fragments for 2 seconds, then respawn
     if (explosion) {
         for (auto& fragment : fragments) {
@@ -62,8 +57,6 @@ void SpaceShip::update(float delta, bool sound) {
     }
 
     if (engineOn || engineOnC) {
-        if (sound) sThrust.play(); // play thrust sound
-
         float angle = shape.getRotation() - 90;
         // convert angle to radian
         float radian = (angle + 180) * M_PI / 180.0f;
@@ -85,7 +78,7 @@ void SpaceShip::update(float delta, bool sound) {
     sf::Vector2f engineOffset(
             std::sin(angle) * engineDistance, -std::cos(angle) * engineDistance);
 
-    engine.setPosition(pos + engineOffset);
+    engine.setPosition(shape.getPosition() + engineOffset);
     engine.setRotation(shape.getRotation());
 
     auto it = projectiles.begin();
@@ -165,14 +158,19 @@ void SpaceShip::initEngineShape() {
 }
 
 void SpaceShip::explode(bool sound) {
-    if (sound) sEx.play(); // Play explosion sound
+    if (explosion || lives <= 0) return;
+    projectiles.clear();
+    engineOn = false;
+    engineOnC = false;
+
+    if (sound) playSound(sEx);
+
     explosion = true;
     respawnTime.restart();
 
     fragments.clear();
     sf::Vector2f center = shape.getPosition();
 
-    // Create 15 explosion fragments
     for (int i = 0; i < 15; i++) {
         auto angle = static_cast<float>(std::rand() % 360) * M_PI / 180.f;
         sf::Vector2f direction(std::cos(angle), std::sin(angle));
@@ -180,7 +178,7 @@ void SpaceShip::explode(bool sound) {
 
         fragments.emplace_back(center, direction, speed, handleColor());
     }
-    lives--; // Decrease lives by 1 after explosion (getting destroyed)
+    lives--;
 }
 
 void SpaceShip::respawn() {
@@ -195,16 +193,17 @@ void SpaceShip::respawn() {
     }
 }
 
-void SpaceShip::shoot(bool sound, std::optional<sf::Vector2f> pos) {
-    // No need for parameter pos, because spaceship shoots in the direction it is facing
-    sf::Vector2f startPos = shape.getPosition();
+void SpaceShip::shoot(bool sound, std::optional<sf::Vector2f>) {
+    if (explosion || lives <= 0) return;
 
-    auto angle = static_cast<float>((shape.getRotation() + 90) * M_PI / 180.0);
-    sf::Vector2f direction(std::cos(angle), std::sin(angle));
+    const auto startPos = shape.getPosition();
+    const float angle =
+        static_cast<float>((shape.getRotation() + 90.f) * M_PI / 180.0);
+
+    const sf::Vector2f direction(std::cos(angle), std::sin(angle));
 
     projectiles.emplace_back(startPos, direction, handleColor());
+    velocity -= direction * RECOIL;
 
-    velocity += direction * (-RECOIL); // recoil
-
-    if (sound) sFire.play(); // play shooting sound
+    if (sound) playSound(sFire);
 }

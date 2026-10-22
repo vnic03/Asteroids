@@ -1,4 +1,5 @@
 #include "Scenes.h"
+#include <algorithm>
 
 
 bool startScreen(sf::RenderWindow &window, const sf::Font &font) {
@@ -76,7 +77,7 @@ GameState chooseGameMode(sf::RenderWindow &window, const sf::Font &font) {
                 window.close();
                 return GameState::START_SCREEN;
             }
-            if (event.type == sf::Event::KeyPressed) {
+            if (event.type == sf::Event::KeyReleased) {
                 if (event.key.code == sf::Keyboard::Num1) {
                     return GameState::CHOOSE_NAME;
 
@@ -96,402 +97,278 @@ GameState chooseGameMode(sf::RenderWindow &window, const sf::Font &font) {
 }
 
 // helper method for choosing name
-std::string nameHandler(sf::RenderWindow &window, const sf::Font &font,
-                        const std::string& instructionText, const std::string& error = "")
-{
-    std::vector<HighScore> scores = readHighScores();
-    std::sort(scores.begin(), scores.end(), [](const HighScore& a, const HighScore& b) {
-        return a.score > b.score;
-    });
+std::string nameHandler(
+    sf::RenderWindow& window,
+    const sf::Font& font,
+    const std::string& instruction,
+    ScoreMode mode,
+    const std::string& forbiddenName = ""
+) {
+    auto scores = readHighScores(mode);
+    int selected = -1;
+    std::string input;
+    std::string error;
 
-    int selectIndex = -1; // start with nobody
-
-    sf::Text instruction(instructionText, font, 20);
-    instruction.setFillColor(WHITE);
-    instruction.setPosition(100, 50);
-
-    sf::Text errorText(error, font, 20);
-    errorText.setFillColor(sf::Color::Red);
-    errorText.setPosition(100, 200);
-
-    sf::Text nameInput("", font, 20);
-    nameInput.setFillColor(sf::Color(191, 64, 191));
-    nameInput.setPosition(100, 100);
-
-    sf::Text existingNames("", font, 20);
-    existingNames.setFillColor(WHITE);
-    existingNames.setPosition(100, 150);
-
-    sf::RectangleShape highlight;
-    int width = 0;
-    highlight.setFillColor(sf::Color(128, 0, 128));
-    highlight.setPosition(90, 150);
-
-    for (const auto& score : scores) {
-        sf::Text tempText(score.name + " - Highscore: " + std::to_string(score.score), font, 20);
-        float textWidth = tempText.getLocalBounds().width;
-        if (textWidth > width) {
-            width = textWidth;
-        }
-    }
-    highlight.setSize(sf::Vector2f(width + 50, 24));
-
-    std::string playerNameInput;
-    bool nameEntered = false;
+    auto refresh = [&]() {
+        scores = readHighScores(mode);
+        selected = -1;
+    };
 
     while (window.isOpen()) {
         sf::Event event{};
+
         while (window.pollEvent(event)) {
             if (event.type == sf::Event::Closed) {
+                window.close();
                 return "";
             }
+
             if (event.type == sf::Event::TextEntered) {
-                if (event.text.unicode < 128 && event.text.unicode != 8 &&
-                    event.text.unicode != 127) {
-                    playerNameInput += static_cast<char>(event.text.unicode);
-                    nameInput.setString(playerNameInput);
-                    nameEntered = true;
+                const auto character = event.text.unicode;
 
-                } else if (event.text.unicode == 8 &&
-                           !playerNameInput.empty()) {
-                    playerNameInput.pop_back();
-                    nameInput.setString(playerNameInput);
-                    nameEntered = !playerNameInput.empty();
+                if (character == 8 && !input.empty()) {
+                    input.pop_back();
+                    selected = -1;
+                } else if (character >= 32 &&
+                           character <= 126 &&
+                           input.size() < 32) {
+                    input += static_cast<char>(character);
+                    selected = -1;
                 }
             }
-            if (event.type == sf::Event::KeyPressed) {
-                if (event.key.code == sf::Keyboard::Down) {
-                    selectIndex = std::min(selectIndex + 1, (int) scores.size() - (nameEntered ? 0 : 1));
 
-                } else if (event.key.code == sf::Keyboard::Up) {
-                    selectIndex = std::max(selectIndex - 1, -1);
+            if (event.type != sf::Event::KeyPressed) {
+                continue;
+            }
 
-                } else if (event.key.code == sf::Keyboard::Delete) {
-                    if (selectIndex >= 0 && selectIndex < scores.size()) {
-                        removePlayer(scores, scores[selectIndex].name);
-                        selectIndex = std::max(0, selectIndex - 1);
-                        scores = readHighScores();
-                    }
+            if (event.key.code == sf::Keyboard::Escape) {
+                window.close();
+                return "";
+            }
 
-                } else if (event.key.code == sf::Keyboard::LAlt || event.key.code == sf::Keyboard::RAlt) {
-                    if (!playerNameInput.empty() && nameEntered) {
-                        auto it = std::find_if(scores.begin(), scores.end(), [&](const HighScore &s) {
-                            return s.name == playerNameInput;
-                        });
-                        if (it == scores.end()) {
-                            writeHighScore(playerNameInput, 0);
-                            scores.push_back({playerNameInput, 0});
-                            playerNameInput.clear();
-                            nameInput.setString("");
-                            nameEntered = false;
-                            scores = readHighScores();
-                        }
-                    }
-                } else if (event.key.code == sf::Keyboard::Enter) {
-                    if (selectIndex >= 0 && selectIndex < scores.size()) {
-                        return scores[selectIndex].name;
-                    } else if (!playerNameInput.empty()) {
-                        auto it = std::find_if(scores.begin(), scores.end(), [&](const HighScore &s) {
-                            return s.name == playerNameInput;
-                        });
-                        if (it == scores.end()) {
-                            writeHighScore(playerNameInput, 0);
-                            return playerNameInput;
-                        }
+            if (event.key.code == sf::Keyboard::Down) {
+                if (!scores.empty()) {
+                    selected = std::min(
+                        selected + 1,
+                        static_cast<int>(scores.size()) - 1
+                    );
+                }
+            } else if (event.key.code == sf::Keyboard::Up) {
+                selected = std::max(-1, selected - 1);
+
+            } else if (event.key.code == sf::Keyboard::Delete) {
+                if (selected >= 0) {
+                    if (scores[selected].name == forbiddenName) {
+                        error = "Player 1 is already using this profile.";
+                    } else {
+                        removePlayer(scores[selected].name);
+                        refresh();
                     }
                 }
-            }
 
-            window.clear();
-            std::string existingNamesText;
+            } else if (event.key.code == sf::Keyboard::Enter) {
+                const std::string name =
+                    selected >= 0 ? scores[selected].name : input;
 
-            existingNamesText.clear();
-            for (size_t i = 0; i < scores.size(); i++) {
-                if (i == selectIndex) {
-                    existingNamesText += "> ";
+                if (!validPlayerName(name)) {
+                    error = "Use 1-32 printable characters.";
+                    continue;
                 }
-                existingNamesText += scores[i].name + " - Highscore: " + std::to_string(scores[i].score) + "\n";
-            }
-            existingNames.setString(existingNamesText);
 
-            window.draw(instruction);
-            window.draw(nameInput);
-
-            if (!error.empty()) {
-                window.draw(errorText);
-            }
-
-            std::istringstream iss(existingNamesText);
-            std::string line;
-            size_t i = 0;
-            while (std::getline(iss, line)) {
-                sf::Text textLine(line, font, 20);
-                textLine.setFillColor(WHITE);
-                textLine.setPosition(100, 150 + i * 24);
-
-                if (i == selectIndex) {
-                    highlight.setPosition(90, 150 + i * 24);
-                    window.draw(highlight);
+                if (name == forbiddenName) {
+                    error = "Players must use different names.";
+                    continue;
                 }
-                window.draw(textLine);
-                i++;
-            }
 
-            window.display();
+                writeHighScore(name, 0, mode);
+                return name;
+            }
         }
+
+        if (!window.isOpen()) {
+            break;
+        }
+
+        window.clear(sf::Color::Black);
+
+        sf::Text title(instruction, font, 24);
+        title.setPosition(80.f, 40.f);
+        window.draw(title);
+
+        sf::Text inputText("Name: " + input, font, 22);
+        inputText.setPosition(80.f, 90.f);
+        window.draw(inputText);
+
+        sf::Text help(
+            "Type name or use arrows | Enter: play | Del: delete profile",
+            font,
+            16
+        );
+        help.setPosition(80.f, 130.f);
+        window.draw(help);
+
+        constexpr int visibleRows = 17;
+        const int firstVisible =
+            std::max(0, selected - visibleRows + 1);
+
+        for (int row = 0; row < visibleRows; ++row) {
+            const int index = firstVisible + row;
+
+            if (index >= static_cast<int>(scores.size())) {
+                break;
+            }
+
+            const auto& entry = scores[index];
+
+            std::string label =
+                (index == selected ? "> " : "  ") +
+                entry.name + " - " + std::to_string(entry.score);
+
+            if (entry.legacyScore > 0) {
+                label += " | Legacy: " +
+                         std::to_string(entry.legacyScore);
+            }
+
+            sf::Text text(label, font, 20);
+            text.setPosition(80.f, 180.f + row * 26.f);
+            text.setFillColor(
+                index == selected ? sf::Color::Cyan : WHITE
+            );
+
+            window.draw(text);
+        }
+
+        sf::Text errorText(error, font, 18);
+        errorText.setFillColor(sf::Color::Red);
+        errorText.setPosition(80.f, 650.f);
+        window.draw(errorText);
+
+        sf::Text status(highScoreStatus(), font, 16);
+        status.setFillColor(sf::Color(255, 200, 80));
+        status.setPosition(80.f, 690.f);
+        window.draw(status);
+
+        window.display();
     }
+
     return "";
 }
 
-
 std::string chooseName(sf::RenderWindow &window, const sf::Font &font) {
-    return nameHandler(window, font, "Enter name or select existing:");
+    return nameHandler(window, font, "Choose your name", ScoreMode::Solo);
 }
 
-std::pair<std::string, std::string> chooseNames(sf::RenderWindow &window, const sf::Font &font) {
-    std::string name1 = nameHandler(window, font, "Enter name or select existing for Player 1:");
-    if (name1.empty()) {
+std::pair<std::string, std::string> chooseNames(
+    sf::RenderWindow& window,
+    const sf::Font& font
+) {
+    const auto first = nameHandler(
+        window,
+        font,
+        "Choose Player 1",
+        ScoreMode::Coop
+    );
+
+    if (first.empty()) {
         return {"", ""};
     }
-    std::string name2;
-    for (;;) {
-        name2 = nameHandler(window, font, "Enter name or select existing for Player 2:");
-        if (name2.empty() || name2 != name1) {
-            break;
-        }
-        nameHandler(window, font, "Enter name or select existing for Player 2:",
-                    "Names must be different!");
-    }
-    return {name1, name2};
+
+    const auto second = nameHandler(
+        window,
+        font,
+        "Choose Player 2",
+        ScoreMode::Coop,
+        first
+    );
+
+    return {first, second};
 }
 
+void gameOver(
+    sf::RenderWindow& window,
+    const std::pair<int, int>& scores,
+    const sf::Font& font,
+    GameState& state,
+    const std::string& name1,
+    const std::string& name2
+) {
+    const bool coop = scores.second != -1;
+    const auto mode = coop ? ScoreMode::Coop : ScoreMode::Solo;
 
-void removePlayer(std::vector<HighScore>& scores, const std::string& name) {
-    scores.erase(std::remove_if(scores.begin(), scores.end(), [&](const HighScore& score) {
-        return score.name == name;
-    }), scores.end());
+    writeHighScore(name1, scores.first, mode);
 
-    std::ofstream file(".highscores.txt");
-    for (const auto& score : scores) {
-        file << score.name << "," << score.score << std::endl;
-    }
-}
-
-
-// Formats an integer with thousand separators, e.g. 10000 -> 10.000
-std::string format(int value) {
-    std::stringstream ss;
-    ss.imbue(std::locale(""));
-    ss << std::fixed << value;
-    return ss.str();
-}
-
-void gameOver(sf::RenderWindow &window, const std::pair<int, int>& scores, const sf::Font& font,
-              GameState& state, const std::string& name1, const std::string& name2)
-{
-    // Can't check for state so this is a temporary Solution
-    bool coop = scores.second != -1;
-
-    sGameOver.play();
-    // "GAME OVER" Text
-    sf::Text gameOverText;
-    gameOverText.setFont(font);
-    gameOverText.setString("GAME OVER");
-    gameOverText.setCharacterSize(60);
-    gameOverText.setFillColor(WHITE);
-    gameOverText.setPosition(SIZE_X / 2.f - gameOverText.getLocalBounds().width / 2, SIZE_Y / 3.f);
-
-    // High Score for Player 1
-    std::vector<HighScore> scoresList = readHighScores();
-    auto it1 = std::find_if(scoresList.begin(), scoresList.end(), [&](const HighScore& s) {
-        return s.name == name1;
-    });
-    int highscore1 = (it1 != scoresList.end()) ? it1->score : 0;
-
-    if (scores.first > highscore1) {
-        writeHighScore(name1, scores.first);
-        highscore1 = scores.first;
-    }
-
-    // High Score for Player 2 if coop
-    int highscore2 = 0;
     if (coop) {
-        auto it2 = std::find_if(scoresList.begin(), scoresList.end(), [&](const HighScore& s) {
-            return s.name == name2;
-        });
-        highscore2 = (it2 != scoresList.end()) ? it2->score : 0;
-
-        if (scores.second > highscore2) {
-            writeHighScore(name2, scores.second);
-            highscore2 = scores.second;
-        }
+        writeHighScore(name2, scores.second, mode);
     }
 
-    // High Score Text for Player 1
-    sf::Text highscoreText1;
-    highscoreText1.setFont(font);
-    highscoreText1.setString((coop ? "Player 1 Highscore: " : "Highscore: ") + format(highscore1));
-    highscoreText1.setCharacterSize(32);
-    highscoreText1.setFillColor(WHITE);
-    highscoreText1.setPosition(
-            SIZE_X / 2.f - highscoreText1.getLocalBounds().width / 2, SIZE_Y / 2.f);
+    const auto records = readHighScores(mode);
 
-    // Score Text for Player 1
-    sf::Text scoreText1;
-    scoreText1.setFont(font);
-    scoreText1.setString((coop ? "Player 1 Score: " : "Your score: ") + format(scores.first));
-    scoreText1.setCharacterSize(28);
-    scoreText1.setFillColor(WHITE);
-    scoreText1.setPosition(
-            SIZE_X / 2.f - scoreText1.getLocalBounds().width / 2,
-            highscoreText1.getPosition().y + highscoreText1.getLocalBounds().height + 40);
-
-    // High Score and Score Text for Player 2 if coop
-    sf::Text highscoreText2;
-    sf::Text scoreText2;
-    if (coop) {
-        highscoreText2.setFont(font);
-        highscoreText2.setString("Player 2 Highscore: " + format(highscore2));
-        highscoreText2.setCharacterSize(32);
-        highscoreText2.setFillColor(WHITE);
-        highscoreText2.setPosition(
-                SIZE_X / 2.f - highscoreText2.getLocalBounds().width / 2,
-                scoreText1.getPosition().y + scoreText1.getLocalBounds().height + 50 // increased spacing
+    auto best = [&](const std::string& name) {
+        const auto found = std::find_if(
+            records.begin(),
+            records.end(),
+            [&](const HighScore& entry) {
+                return entry.name == name;
+            }
         );
 
-        scoreText2.setFont(font);
-        scoreText2.setString("Player 2 Score: " + format(scores.second));
-        scoreText2.setCharacterSize(28);
-        scoreText2.setFillColor(WHITE);
-        scoreText2.setPosition(
-                SIZE_X / 2.f - scoreText2.getLocalBounds().width / 2,
-                highscoreText2.getPosition().y + highscoreText2.getLocalBounds().height + 40);
-    }
+        return found != records.end() ? found->score : 0;
+    };
 
-    // "Play Again" Button
-    sf::Text playAgainText;
-    playAgainText.setFont(font);
-    playAgainText.setString("Play Again");
-    playAgainText.setCharacterSize(30);
-    playAgainText.setFillColor(WHITE);
-    playAgainText.setPosition(
-            SIZE_X / 2.f - playAgainText.getLocalBounds().width / 2, SIZE_Y / 1.5);
-
-    // "(press enter)" Text
-    sf::Text pressEnterText;
-    pressEnterText.setFont(font);
-    pressEnterText.setString("(press enter)");
-    pressEnterText.setCharacterSize(18);
-    pressEnterText.setFillColor(WHITE);
-    pressEnterText.setPosition(
-            playAgainText.getPosition().x +
-            playAgainText.getLocalBounds().width / 2 -
-            pressEnterText.getLocalBounds().width / 2,
-            playAgainText.getPosition().y +
-            playAgainText.getLocalBounds().height + 10);
-
-    window.clear();
-    window.draw(gameOverText);
-
-    window.draw(highscoreText1);
-    window.draw(scoreText1);
+    std::string results =
+        name1 + "\nScore: " + std::to_string(scores.first) +
+        "\nBest: " + std::to_string(best(name1));
 
     if (coop) {
-        window.draw(highscoreText2);
-        window.draw(scoreText2);
+        results +=
+            "\n\n" + name2 +
+            "\nScore: " + std::to_string(scores.second) +
+            "\nBest: " + std::to_string(best(name2));
     }
 
-    if (!coop) window.draw(playAgainText);
-    if (!coop) window.draw(pressEnterText);
+    playSound(sGameOver);
 
-    window.display();
-
-    bool wait = true;
-    while (wait) {
+    while (window.isOpen()) {
         sf::Event event{};
+
         while (window.pollEvent(event)) {
             if (event.type == sf::Event::Closed ||
                 (event.type == sf::Event::KeyPressed &&
-                 event.key.code == sf::Keyboard::Escape))
-            {
+                 event.key.code == sf::Keyboard::Escape)) {
                 window.close();
-                wait = false;
+                return;
             }
-            // Restarts the game if the player presses enter
+
             if (event.type == sf::Event::KeyPressed &&
-                event.key.code == sf::Keyboard::Enter)
-            {
-                state = GameState::RUNNING;
-                wait = false;
+                event.key.code == sf::Keyboard::Enter) {
+                state = GameState::START_SCREEN;
+                return;
             }
         }
-    }
-}
 
-
-/*
- * Secures a string by XOR-ing each char with a random byte, seeded by `key`
- */
-std::string secure(const std::string& data, const unsigned long key) {
-    std::string result = data;
-    srand(key);
-
-    for (size_t i = 0; i < data.size(); i++) {
-        auto byte = static_cast<unsigned char>(rand() % 256);
-        result[i] = static_cast<char>(data[i] ^ byte);
-    }
-    return result;
-}
-
-std::vector<HighScore>readHighScores() {
-    Config::createEnv(".env");
-    Config config(".env");
-    auto key = config.getKey();
-
-    std::vector<HighScore> scores;
-    std::ifstream file(".highscores.txt");
-    std::string line;
-
-    while (std::getline(file, line)) {
-        line = secure(line, key);
-        std::istringstream iss(line);
-        std::string name;
-        int score;
-        if (std::getline(iss, name, ',') && (iss >> score)) {
-            scores.push_back({name, score});
-        }
-    }
-    file.close();
-    return scores;
-}
-
-void writeHighScore(const std::string& name, int score) {
-    try {
-        Config::createEnv(".env");
-        Config config(".env");
-        auto key = config.getKey();
-
-        std::vector<HighScore> scores = readHighScores();
-        auto it = std::find_if(scores.begin(), scores.end(), [&](const HighScore& s) {
-            return s.name == name;
-        });
-
-        if (it != scores.end()) {
-            if (it->score < score) it->score = score;
-
-        } else {
-            scores.push_back({name, score});
+        if (!window.isOpen()) {
+            break;
         }
 
-        std::ofstream file(".highscores.txt");
-        for (const auto& s : scores) {
-            std::string line = s.name + "," + std::to_string(s.score);
-            line = secure(line, key);
-            file << line << std::endl;
-        }
-        file.close();
+        window.clear(sf::Color::Black);
 
-    } catch (const std::exception& e) {
-        std::cerr << "Error while writing Highscore: " << e.what() << std::endl;
+        sf::Text title("GAME OVER", font, 60);
+        title.setPosition(100.f, 80.f);
+        window.draw(title);
+
+        sf::Text resultText(results, font, 26);
+        resultText.setPosition(100.f, 210.f);
+        window.draw(resultText);
+
+        sf::Text prompt("Enter: play again | Esc: quit", font, 22);
+        prompt.setPosition(100.f, 620.f);
+        window.draw(prompt);
+
+        sf::Text status(highScoreStatus(), font, 16);
+        status.setFillColor(sf::Color(255, 200, 80));
+        status.setPosition(100.f, 690.f);
+        window.draw(status);
+
+        window.display();
     }
 }

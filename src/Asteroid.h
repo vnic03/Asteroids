@@ -10,6 +10,7 @@
 #include "GameConstants.h"
 #include "logic/GameRules.h"
 
+
 enum class AsteroidSize {
     BIG,
     MEDIUM,
@@ -25,6 +26,7 @@ public:
     int hp;
 
     float collisionRadius = 0.f;
+    int spawnLevel = 1;
 
     explicit Asteroid(AsteroidSize size)
         : size(size) {
@@ -32,15 +34,18 @@ public:
             case AsteroidSize::BIG:
                 hp = 4;
                 break;
-
             case AsteroidSize::MEDIUM:
                 hp = 2;
                 break;
-
             case AsteroidSize::SMALL:
                 hp = 1;
                 break;
         }
+    }
+
+    int fragmentWeight() const {
+        return size == AsteroidSize::BIG ? 4 :
+               size == AsteroidSize::MEDIUM ? 2 : 1;
     }
 
     static std::vector<std::unique_ptr<Asteroid>> initAsteroids(
@@ -48,8 +53,6 @@ public:
         int level
     ) {
         std::vector<std::unique_ptr<Asteroid>> asteroids;
-
-        amount = GameRules::asteroidAmount(amount, level);
 
         if (amount > 0) {
             asteroids.reserve(static_cast<std::size_t>(amount));
@@ -72,34 +75,22 @@ public:
         const int points = 12 + std::rand() % 6;
         shape.setPointCount(points);
 
-        float base = 0.f;
-        float speed = 0.f;
+        spawnLevel = level;
 
-        switch (size) {
-            case AsteroidSize::BIG:
-                base = 30.f;
-                speed = GameRules::BigAsteroidSpeed;
-                break;
+        const float base =
+            size == AsteroidSize::BIG ? 30.f :
+            size == AsteroidSize::MEDIUM ? 20.f : 10.f;
 
-            case AsteroidSize::MEDIUM:
-                base = 20.f;
-                speed = GameRules::MediumAsteroidSpeed;
-                break;
-
-            case AsteroidSize::SMALL:
-                base = 10.f;
-                speed = GameRules::SmallAsteroidSpeed;
-                break;
-        }
-
-        speed *= GameRules::asteroidSpeedMultiplier(level);
+        const float speed = GameRules::asteroidSpeed(
+            static_cast<int>(size),
+            level
+        );
 
         for (int i = 0; i < points; ++i) {
-            const float angle =
-                (i * 360.f / points) * (M_PI / 180.f);
+            const float angle = (i * 360.f / points) * (M_PI / 180.f);
 
-            const float variation =
-                0.8f + static_cast<float>(std::rand() % 40) / 100.f;
+            const float variation = 0.8f +
+                static_cast<float>(std::rand() % 40) / 100.f;
 
             const float radius = base * variation;
 
@@ -114,13 +105,12 @@ public:
             std::rand() % SIZE_Y
         );
 
-        const float speedX =
-            (std::rand() % 100 - 50) / 50.f * speed;
+        const float heading = (std::rand() % 360) * GameRules::Pi / 180.f;
 
-        const float speedY =
-            (std::rand() % 100 - 50) / 50.f * speed;
-
-        velocity = {speedX, speedY};
+        velocity = {
+            std::cos(heading) * speed,
+            std::sin(heading) * speed
+        };
 
         shape.setFillColor(sf::Color::Transparent);
         shape.setOutlineThickness(1.5f);

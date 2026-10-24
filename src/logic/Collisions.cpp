@@ -96,7 +96,7 @@ void resolveAsteroidCollisions(
     std::vector<std::unique_ptr<Asteroid>>& asteroids,
     SpaceShip& spaceship,
     int& score,
-    int level,
+    int /*level*/,
     bool sound
 ) {
     if (spaceship.explosion || spaceship.lives <= 0) {
@@ -113,7 +113,6 @@ void resolveAsteroidCollisions(
                 )) {
                 spaceship.explode(sound);
 
-                // explode() clears the player's projectiles.
                 return;
             }
         }
@@ -158,6 +157,8 @@ void resolveAsteroidCollisions(
             if ((*asteroid)->hp <= 0) {
                 const AsteroidSize size = (*asteroid)->size;
 
+                const int fragmentLevel = (*asteroid)->spawnLevel;
+
                 awardAsteroidScore(size, score, sound);
                 asteroids.erase(asteroid);
 
@@ -166,7 +167,7 @@ void resolveAsteroidCollisions(
                     asteroids,
                     size,
                     position,
-                    level
+                    fragmentLevel
                 );
             }
 
@@ -230,7 +231,9 @@ void resolveAlienCollisions(
             if (alien->isDestroyed()) {
                 addScore(
                     score,
-                    alien->alienSize == AlienSize::BIG ? 200 : 1000
+                    alien->alienSize == AlienSize::BIG
+                        ? GameRules::BigAlienScore
+                        : GameRules::SmallAlienScore
                 );
             }
         }

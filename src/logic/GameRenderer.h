@@ -3,6 +3,9 @@
 #include <memory>
 #include <vector>
 
+#include "WaveController.h"
+#include "Progression.h"
+
 #include "../Asteroid.h"
 #include "../alien/Alien.h"
 #include "../spaceship/Spaceship.h"
@@ -19,14 +22,21 @@ public:
         bool coop,
         int score,
         int score2,
-        bool paused
+        bool paused,
+        const WaveController& waves,
+        const Progression& progression
     );
 
 private:
     sf::Text pauseText;
+    sf::Text hudText;
     sf::ConvexShape lifeShape;
 
-    void drawScore(sf::RenderWindow& window, int id, int score);
+    void drawScore(
+        sf::RenderWindow& window,
+        int id,
+        int score
+    );
 
     void drawLives(
         sf::RenderWindow& window,

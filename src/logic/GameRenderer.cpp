@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <string>
+#include <cmath>
 
 namespace {
 
@@ -34,7 +35,8 @@ void drawNumber(
 } // namespace
 
 GameRenderer::GameRenderer(const sf::Font& font)
-    : pauseText("Pause", font, 40) {
+    : pauseText("Pause", font, 40), hudText("", font, 18)
+{
     pauseText.setFillColor(WHITE);
     pauseText.setPosition(
         SIZE_X / 2.f - pauseText.getLocalBounds().width / 2.f,
@@ -98,7 +100,9 @@ void GameRenderer::draw(
     bool coop,
     int score,
     int score2,
-    bool paused
+    bool paused,
+    const WaveController& waves,
+    const Progression&
 ) {
     window.clear(sf::Color::Black);
 
@@ -128,6 +132,41 @@ void GameRenderer::draw(
         drawLives(window, spaceships[2], 68.f);
     } else {
         drawLives(window, spaceships[0], 28.f);
+    }
+
+    auto drawCenteredText = [&](
+        const std::string& text,
+        float y
+    ) {
+        hudText.setString(text);
+        hudText.setFillColor(WHITE);
+
+        const auto bounds = hudText.getLocalBounds();
+
+        hudText.setPosition(
+            SIZE_X / 2.f - bounds.left - bounds.width / 2.f,
+            y
+        );
+
+        window.draw(hudText);
+    };
+
+    drawCenteredText(
+        "WAVE " + std::to_string(waves.currentLevel()),
+        12.f
+    );
+
+    const float remaining = waves.secondsRemaining();
+
+    if (remaining > 0.f && remaining <= 5.f) {
+        const int seconds = static_cast<int>(
+            std::ceil(remaining)
+        );
+
+        drawCenteredText(
+            "NEXT WAVE IN " + std::to_string(seconds) + "s",
+            40.f
+        );
     }
 
     if (paused) {

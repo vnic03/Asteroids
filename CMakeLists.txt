@@ -20,6 +20,7 @@ add_executable(Asteroids src/main.cpp
     src/HighScores.cpp
     src/HighScores.h
     src/SimulationClock.h
+
 )
 
 target_sources(Asteroids PRIVATE
@@ -32,6 +33,7 @@ target_sources(Asteroids PRIVATE
     src/logic/WaveController.cpp
     src/logic/GameRenderer.h
     src/logic/GameRenderer.cpp
+    src/logic/Progression.h
 )
 
 # SFML

@@ -1,94 +1,139 @@
 #pragma once
 
+#include <algorithm>
+#include <cmath>
 #include <cstdlib>
+
 
 namespace GameRules {
 
-// Frame timing
+inline constexpr float Pi = 3.14159265358979323846f;
+
+// Simulation
 inline constexpr float MaxFrameDelta = 0.05f;
+
+// Waves and spawning
+inline constexpr float WaveSeconds = 30.f;
+inline constexpr float RestSeconds = 5.f;
+inline constexpr float SpawnWarningSeconds = 1.2f;
+inline constexpr float SpawnRetrySeconds = 3.f;
+inline constexpr float SafeSpawnDistance = 180.f;
 
 // Player
 inline constexpr int StartingLives = 3;
+inline constexpr int MaxLives = 5;
 inline constexpr float RespawnSeconds = 2.f;
 inline constexpr float InvincibleSeconds = 3.f;
 
-// Projectiles
+// Player projectiles
 inline constexpr float PlayerProjectileLifetime = 1.2f;
-inline constexpr float AlienProjectileLifetime = 30.f;
 inline constexpr float PlayerProjectileSpeed = 500.f;
 inline constexpr float PlayerProjectileRadius = 2.f;
 
-// Asteroids
-inline constexpr float BigAsteroidSpeed = 50.f;
-inline constexpr float MediumAsteroidSpeed = 120.f;
-inline constexpr float SmallAsteroidSpeed = 200.f;
-
 // Aliens
-inline constexpr int MaxAliensPerWave = 2;
-
-inline constexpr int BigAlienLives = 10;
+inline constexpr int BigAlienLives = 6;
 inline constexpr int SmallAlienLives = 2;
 
 inline constexpr float BigAlienSpeed = 50.f;
 inline constexpr float SmallAlienSpeed = 100.f;
+inline constexpr float SmallAlienDirectionInterval = 0.9f;
 
-inline constexpr float BigAlienShootInterval = 3.f;
-inline constexpr float SmallAlienShootInterval = 1.5f;
-inline constexpr float SmallAlienDirectionInterval = 0.5f;
+inline constexpr float AlienChargeSeconds = 0.55f;
+inline constexpr float AlienSpawnGrace = 1.5f;
 
-inline constexpr int BigAlienShotCount = 3;
-inline constexpr int SmallAlienShotCount = 1;
-
+inline constexpr float AlienProjectileLifetime = 30.f;
 inline constexpr float BigAlienProjectileSpeed = 80.f;
 inline constexpr float SmallAlienProjectileSpeed = 120.f;
-
 inline constexpr float BigAlienProjectileRadius = 8.f;
 inline constexpr float SmallAlienProjectileRadius = 5.f;
 
-// Audio timing
+inline constexpr int BigAlienScore = 300;
+inline constexpr int SmallAlienScore = 600;
+
+// Audio
 inline constexpr float AlienSoundSeconds = 1.8f;
 inline constexpr float InitialBeatInterval = 1.f;
-inline constexpr float MinimumBeatInterval = 0.1f;
+inline constexpr float MinimumBeatInterval = 0.35f;
 inline constexpr float BeatAccelerationInterval = 5.f;
 inline constexpr float BeatAccelerationFactor = 0.9f;
 
-inline int baseAsteroidAmount(bool coop) {
-    return coop ? 12 : 10;
+enum class WaveType {
+    INTRO,
+    MIXED,
+    FIELD,
+    HUNT,
+    DEBRIS,
+    RECOVERY,
+    ASSAULT
+};
+
+inline WaveType waveType(int wave) {
+    if (wave == 1) return WaveType::INTRO;
+    if (wave <= 5) return WaveType::MIXED;
+
+    switch (wave % 5) {
+        case 0: return WaveType::ASSAULT;
+        case 1: return WaveType::RECOVERY;
+        case 2: return WaveType::FIELD;
+        case 3: return WaveType::DEBRIS;
+        default: return WaveType::HUNT;
+    }
 }
 
-// Preserve the existing behavior:
-// from level 4 onward, add one asteroid to the base amount.
-inline int asteroidAmount(int baseAmount, int level) {
-    if (level > 3 && baseAmount <= 20) {
-        return baseAmount + 1;
+inline const char* waveName(int wave) {
+    switch (waveType(wave)) {
+        case WaveType::INTRO: return "FIRST CONTACT";
+        case WaveType::FIELD: return "ASTEROID FIELD";
+        case WaveType::HUNT: return "ALIEN HUNT";
+        case WaveType::DEBRIS: return "FAST DEBRIS";
+        case WaveType::RECOVERY: return "BREATHER";
+        case WaveType::ASSAULT: return "ALIEN ASSAULT";
+        default: return "MIXED ATTACK";
+    }
+}
+
+inline int asteroidCount(int wave) {
+    if (wave <= 5) {
+        constexpr int counts[] = {4, 5, 6, 6, 8};
+        return counts[wave - 1];
     }
 
-    return baseAmount;
-}
+    const int growth = std::min(3, (wave - 6) / 5);
 
-inline float asteroidSpeedMultiplier(int level) {
-    if (level <= 10) {
-        return 1.f + (level - 1) * 0.1f;
+    switch (waveType(wave)) {
+        case WaveType::RECOVERY: return 5;
+        case WaveType::FIELD: return 8 + growth;
+        case WaveType::DEBRIS: return 7 + growth;
+        case WaveType::HUNT: return 5 + growth;
+        default: return 6 + growth;
     }
-
-    if (level <= 20) {
-        return 1.9f + (level - 10) * 0.05f;
-    }
-
-    return 2.4f + (level - 20) * 0.01f;
 }
 
-inline bool grantsExtraLife(int level) {
-    return (level % 2 == 0 && level < 10) ||
-           (level % 4 == 2 && level >= 10);
+// size: BIG = 0, MEDIUM = 1, SMALL = 2.
+// The returned value is the actual velocity magnitude.
+inline float asteroidSpeed(int size, int wave) {
+    constexpr float base[] = {45.f, 80.f, 120.f};
+    constexpr float maximum[] = {80.f, 140.f, 200.f};
+
+    const float progress = std::clamp((wave - 1) / 19.f, 0.f, 1.f);
+
+    const float speed = base[size] + (maximum[size] - base[size]) * progress;
+
+    const float variation = 0.9f + (std::rand() % 201) / 1000.f;
+
+    return std::min(maximum[size], speed * variation);
 }
 
-inline float nextAlienSpawnDelay(bool coop, bool firstSpawn) {
-    // The first spawn of a new game previously used 8–12 seconds,
-    // including in cooperative mode.
-    const int minimum = firstSpawn ? 8 : (coop ? 6 : 8);
+inline float alienShootInterval(bool big, int wave) {
+    const int progress = std::clamp(wave - 1, 0, 20);
 
-    return static_cast<float>((std::rand() % 5) + minimum);
+    return big
+        ? std::max(2.5f, 3.f - progress * 0.025f)
+        : std::max(1.4f, 2.2f - progress * 0.04f);
+}
+
+inline int clearBonus(float remaining) {
+    return 100 + 10 * static_cast<int>(std::max(0.f, remaining));
 }
 
 } // namespace GameRules

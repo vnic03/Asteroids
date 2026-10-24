@@ -1,66 +1,69 @@
 #include "Alien.h"
+#include "../logic/GameRules.h"
 #include <algorithm>
 
 Alien::Alien(AlienSize size) : alienSize(size) {
-    float startX; float startY;
+    float startX = 0.f, startY = 0.f;
 
     if (size == AlienSize::BIG) {
-        shootInterval = 3.f; // 3 sec
-        lives = 10;
+        shootInterval = GameRules::BigAlienShootInterval;
+        lives = GameRules::BigAlienLives;
 
-        int side = std::rand() % 4;
+        const int side = std::rand() % 4;
+
         switch (side) {
-            case 0: // up
+            case 0:
                 startX = std::rand() % SIZE_X;
-                startY = 0;
+                startY = 0.f;
                 break;
-            case 1: // right
+
+            case 1:
                 startX = SIZE_X;
                 startY = std::rand() % SIZE_Y;
                 break;
-            case 2: // down
+
+            case 2:
                 startX = std::rand() % SIZE_X;
                 startY = SIZE_Y;
                 break;
-            case 3: // left
-                startX = 0;
+
+            case 3:
+                startX = 0.f;
                 startY = std::rand() % SIZE_Y;
                 break;
         }
+
         shape.setPosition(startX, startY);
 
-        sf::Vector2f center(SIZE_X / 2.f, SIZE_Y / 2.f);
-        sf::Vector2f startPos(startX, startY);
-        sf::Vector2f direction = center - startPos;
+        const sf::Vector2f center(SIZE_X / 2.f, SIZE_Y / 2.f);
+        sf::Vector2f direction = center - shape.getPosition();
 
-        float length = std::sqrt(direction.x * direction.x +
-                direction.y * direction.y);
+        const float length = std::sqrt(
+            direction.x * direction.x +
+            direction.y * direction.y
+        );
+
         direction /= length;
-        velocity = direction * 50.f;
-
-    } else { // SMALL
-        velocity = sf::Vector2f(100.f, 0.f);
-        shootInterval = 1.5f;
-        lives = 2;
+        velocity = direction * GameRules::BigAlienSpeed;
+    } else {
+        velocity = {GameRules::SmallAlienSpeed, 0.f};
+        shootInterval = GameRules::SmallAlienShootInterval;
+        lives = GameRules::SmallAlienLives;
     }
+
     initShape();
+
+    collisionRadius = shape.getGlobalBounds().width / 2.f;
+
+    updateVisualPositions();
 }
 
 void Alien::draw(sf::RenderWindow &window) {
-    line.setPosition(shape.getPosition());
-    float cockpitOffsetY = (-r_y) - (cockpitHeight / 2) + 1.9f;
-    cockpit.setPosition(shape.getPosition().x, shape.getPosition().y + cockpitOffsetY);
-
     window.draw(shape);
     window.draw(line);
     window.draw(cockpit);
 
-    for (const auto& p : projectiles) {
-        sf::CircleShape circle(p.radius);
-        circle.setPosition(p.position - sf::Vector2f(p.radius, p.radius));
-        circle.setFillColor(p.color);
-        window.draw(circle);
-    }
+    drawProjectiles(window);
 }
 
 void Alien::update(float delta, bool) {
@@ -69,59 +72,84 @@ void Alien::update(float delta, bool) {
     if (alienSize == AlienSize::SMALL) {
         directionElapsed += delta;
 
-        if (directionElapsed >= 0.5f) {
+        if (directionElapsed >=
+            GameRules::SmallAlienDirectionInterval) {
             directionElapsed = 0.f;
 
-            const float angle =
-                static_cast<float>((std::rand() % 360) * M_PI / 180.0);
-
-            velocity = sf::Vector2f(
-                    std::cos(angle) * 100.f,
-                    std::sin(angle) * 100.f
+            const float angle = static_cast<float>(
+                (std::rand() % 360) * M_PI / 180.0
             );
+
+            velocity = {
+                std::cos(angle) * GameRules::SmallAlienSpeed,
+                std::sin(angle) * GameRules::SmallAlienSpeed
+            };
         }
     }
 
-    wrapAroundScreen(shape, shape.getPosition() + velocity * delta);
+    wrapAroundScreen(
+        shape,
+        shape.getPosition() + velocity * delta
+    );
 
-    for (auto& p : projectiles) {
-        p.position += p.direction * p.speed * delta;
+    updateVisualPositions();
+
+    for (auto& projectile : projectiles) {
+        projectile.position +=
+            projectile.direction * projectile.speed * delta;
     }
 
     std::erase_if(projectiles, [](const Projectile& projectile) {
-        const auto pos = projectile.position;
+        const auto position = projectile.position;
         const float radius = projectile.radius;
 
-        return projectile.lifetime.getElapsedTime().asSeconds() > 30.f ||
-               pos.x < -radius ||
-               pos.x > SIZE_X + radius ||
-               pos.y < -radius ||
-               pos.y > SIZE_Y + radius;
+        return
+            projectile.lifetime.getElapsedTime().asSeconds() >
+                GameRules::AlienProjectileLifetime ||
+            position.x < -radius ||
+            position.x > SIZE_X + radius ||
+            position.y < -radius ||
+            position.y > SIZE_Y + radius;
     });
 }
 
-void Alien::shoot(bool sound, std::optional<sf::Vector2f> playerPos) {
+void Alien::shoot(bool sound, std::optional<sf::Vector2f> playerPos)
+{
     if (isDestroyed() ||
         shootTimer.getElapsedTime().asSeconds() < shootInterval) {
         return;
     }
 
-    if (alienSize == AlienSize::SMALL && !playerPos) return;
+    const bool big = alienSize == AlienSize::BIG;
+
+    if (!big && !playerPos) return;
 
     const auto startPos = shape.getPosition();
 
-    const int shootCount = alienSize == AlienSize::BIG ? 3 : 1;
-    const float radius = alienSize == AlienSize::BIG ? 8.f : 5.f;
-    const float speed = alienSize == AlienSize::BIG ? 80.f : 120.f;
+    const int shootCount =
+        big ? GameRules::BigAlienShotCount
+            : GameRules::SmallAlienShotCount;
+
+    const float radius =
+        big ? GameRules::BigAlienProjectileRadius
+            : GameRules::SmallAlienProjectileRadius;
+
+    const float speed =
+        big ? GameRules::BigAlienProjectileSpeed
+            : GameRules::SmallAlienProjectileSpeed;
 
     for (int i = 0; i < shootCount; ++i) {
         sf::Vector2f direction;
 
-        if (alienSize == AlienSize::BIG) {
-            const float angle =
-                static_cast<float>((std::rand() % 360) * M_PI / 180.0);
+        if (big) {
+            const float angle = static_cast<float>(
+                (std::rand() % 360) * M_PI / 180.0
+            );
 
-            direction = sf::Vector2f(std::cos(angle), std::sin(angle));
+            direction = {
+                std::cos(angle),
+                std::sin(angle)
+            };
         } else {
             direction = *playerPos - startPos;
 
@@ -131,8 +159,13 @@ void Alien::shoot(bool sound, std::optional<sf::Vector2f> playerPos) {
             }
         }
 
-        // Projectile normalizes the direction.
-        projectiles.emplace_back(startPos, direction, WHITE, speed, radius);
+        projectiles.emplace_back(
+            startPos,
+            direction,
+            WHITE,
+            speed,
+            radius
+        );
     }
 
     shootTimer.restart();
@@ -146,6 +179,18 @@ void Alien::explode(bool sound) {
     lives = 0;
     projectiles.clear();
     if (sound) playSound(sEx);
+}
+
+void Alien::updateVisualPositions() {
+    line.setPosition(shape.getPosition());
+
+    const float cockpitOffsetY =
+        -r_y - cockpitHeight / 2.f + 1.9f;
+
+    cockpit.setPosition(
+        shape.getPosition().x,
+        shape.getPosition().y + cockpitOffsetY
+    );
 }
 
 void Alien::initShape() {

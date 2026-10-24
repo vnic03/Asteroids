@@ -6,21 +6,33 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_executable(Asteroids src/main.cpp
-        src/Asteroid.h                      # Header for asteroid entities
-        src/GameConstants.h                 # Header for game-wide constants
-        src/spaceship/Spaceship.h           # Header for the spaceship entity
-        src/spaceship/Spaceship.cpp         # Implementation for the spaceship entity
-        src/logic/logic.h                   # Header for game logic functions
-        src/logic/logic.cpp                 # Implementation for game logic functions
-        src/alien/Alien.cpp                 # Implementation for alien entities
-        src/alien/Alien.h                   # Header for alien entities
-        src/MovableEntity.h                 # Base abstract class for spaceship and alien
-        src/scenes/Scenes.h                 # Manages the logic and design of the scenes
-        src/scenes/Scenes.cpp               # Implementation for logic and design
-        src/HighScores.cpp
-        src/HighScores.h
-        src/SimulationClock.h
-        )
+    src/Asteroid.h
+    src/GameConstants.h
+    src/spaceship/Spaceship.h
+    src/spaceship/Spaceship.cpp
+    src/logic/logic.h
+    src/logic/logic.cpp
+    src/alien/Alien.cpp
+    src/alien/Alien.h
+    src/MovableEntity.h
+    src/scenes/Scenes.h
+    src/scenes/Scenes.cpp
+    src/HighScores.cpp
+    src/HighScores.h
+    src/SimulationClock.h
+)
+
+target_sources(Asteroids PRIVATE
+    src/logic/Movement.h
+    src/logic/Movement.cpp
+    src/logic/Collisions.h
+    src/logic/Collisions.cpp
+    src/logic/GameRules.h
+    src/logic/WaveController.h
+    src/logic/WaveController.cpp
+    src/logic/GameRenderer.h
+    src/logic/GameRenderer.cpp
+)
 
 # SFML
 # used for graphics, window management, system events, and audio

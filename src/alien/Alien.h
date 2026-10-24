@@ -14,6 +14,8 @@ class Alien : public MovableEntity {
 public:
     AlienSize alienSize;
 
+    float collisionRadius = 0.f;
+
     explicit Alien(AlienSize size);
 
     void draw(sf::RenderWindow &window) override;
@@ -37,6 +39,8 @@ public:
 
 private:
     void initShape() override;
+
+    void updateVisualPositions();
 
     SimulationClock shootTimer;
     float directionElapsed = 0.f;

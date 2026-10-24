@@ -27,6 +27,7 @@ bool startScreen(sf::RenderWindow &window, const sf::Font &font) {
 
     Alien alien(AlienSize::SMALL);
     alien.shape.setPosition(SIZE_X / 2.f + SIZE_X / 4.f, SIZE_Y / 2.5f);
+    alien.update(0.f, false);
 
     while (window.isOpen()) {
         sf::Event event{};

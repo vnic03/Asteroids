@@ -5,6 +5,7 @@
 #include <vector>
 #include <cmath>
 #include <optional>
+#include "logic/GameRules.h"
 #include "GameConstants.h"
 
 struct Projectile {
@@ -20,8 +21,8 @@ struct Projectile {
             sf::Vector2f pos,
             sf::Vector2f dir,
             sf::Color color,
-            float spd = 500.f,
-            float rad = 2.f
+            float spd = GameRules::PlayerProjectileSpeed,
+            float rad = GameRules::PlayerProjectileRadius
         )
             :
                 position(pos),
@@ -56,6 +57,26 @@ public:
     virtual void explode(bool sound) = 0;
 
 protected:
+    sf::CircleShape projectileShape{
+        GameRules::PlayerProjectileRadius
+    };
+
+    void drawProjectiles(sf::RenderWindow& window) {
+        for (const auto& projectile : projectiles) {
+            if (projectileShape.getRadius() != projectile.radius) {
+                projectileShape.setRadius(projectile.radius);
+            }
+
+            projectileShape.setPosition(
+                projectile.position -
+                sf::Vector2f(projectile.radius, projectile.radius)
+            );
+
+            projectileShape.setFillColor(projectile.color);
+            window.draw(projectileShape);
+        }
+    }
+
     virtual void initShape() = 0;
 
     // keeps all entities in the screen

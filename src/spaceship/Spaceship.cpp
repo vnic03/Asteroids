@@ -1,103 +1,118 @@
 #include "Spaceship.h"
+#include "../logic/GameRules.h"
+#include <algorithm>
 
 SpaceShip::SpaceShip(int id) : id(id) {
-    lives = 3;
+    lives = GameRules::StartingLives;
     initShape();
     initEngineShape();
-    // invincible at start of the game
     invincible = true;
     invincibleTimer.restart();
 }
 
-void SpaceShip::draw(sf::RenderWindow &window) {
+void SpaceShip::draw(sf::RenderWindow& window) {
     if (!explosion) {
-        if (!invincible ||((int)
-            (invincibleTimer.getElapsedTime().asSeconds() / 0.2)) % 2 == 0)
-        {
-            window.draw(shape); // Draw spaceship
-            // Draw engine if spaceship is moving
-            if (engineOn || engineOnC) window.draw(engine);
+        const bool visible =
+            !invincible ||
+            static_cast<int>(
+                invincibleTimer.getElapsedTime().asSeconds() / 0.2f
+            ) % 2 == 0;
+
+        if (visible) {
+            window.draw(shape);
+
+            if (engineOn || engineOnC) {
+                window.draw(engine);
+            }
         }
-        // Draw projectiles as circles
-        for (const auto& projectile : projectiles) {
-            sf::CircleShape circle(projectile.radius);
-            circle.setPosition(projectile.position - sf::Vector2f(
-                    projectile.radius, projectile.radius)
-                    );
-            circle.setFillColor(projectile.color);
-            window.draw(circle);
-        }
-    } else { // Draw explosion fragments as lines
+
+        drawProjectiles(window);
+
+    } else {
         for (const auto& fragment : fragments) {
             sf::Vertex line[] = {
-                    sf::Vertex(fragment.position, WHITE),
-                    sf::Vertex(fragment.position +
-                        fragment.direction *
-                        10.f, fragment.color)
+                sf::Vertex(fragment.position, WHITE),
+                sf::Vertex(
+                    fragment.position + fragment.direction * 10.f,
+                    fragment.color
+                )
             };
+
             window.draw(line, 2, sf::Lines);
         }
     }
 }
 
 void SpaceShip::update(float delta, bool) {
-    // Show Explosion fragments for 2 seconds, then respawn
     if (explosion) {
         for (auto& fragment : fragments) {
-            fragment.position += fragment.direction * fragment.speed * delta;
+            fragment.position +=
+                fragment.direction * fragment.speed * delta;
         }
-        if (respawnTime.getElapsedTime().asSeconds() > 2) {
+
+        if (respawnTime.getElapsedTime().asSeconds() >
+            GameRules::RespawnSeconds) {
             respawn();
         }
+
         return;
     }
-    // invincible for 3 seconds
-    if (invincible && invincibleTimer.getElapsedTime().asSeconds() > 3.f) {
+
+    if (invincible &&
+        invincibleTimer.getElapsedTime().asSeconds() >
+            GameRules::InvincibleSeconds) {
         invincible = false;
     }
 
     if (engineOn || engineOnC) {
-        float angle = shape.getRotation() - 90;
-        // convert angle to radian
-        float radian = (angle + 180) * M_PI / 180.0f;
+        const float angle = shape.getRotation() - 90.f;
+        const float radians = (angle + 180.f) * M_PI / 180.f;
 
         velocity += sf::Vector2f(
-                std::cos(radian) * MOVE_SPEED * delta,
-                std::sin(radian) * MOVE_SPEED * delta);
+            std::cos(radians) * MOVE_SPEED * delta,
+            std::sin(radians) * MOVE_SPEED * delta
+        );
+    } else {
+        velocity *= std::pow(DRAG, delta);
+    }
 
-    } else  velocity *= std::pow(DRAG, delta); // apply drag
+    wrapAroundScreen(
+        shape,
+        shape.getPosition() + velocity * delta
+    );
 
-    sf::Vector2f pos = shape.getPosition() + velocity * delta;
-
-    wrapAroundScreen(shape, pos);
-
-    float angle = shape.getRotation() * M_PI / 180.f;
+    const float angle = shape.getRotation() * M_PI / 180.f;
     const float engineDistance = 12.f;
 
-    // connects the engine to the spaceship.
-    sf::Vector2f engineOffset(
-            std::sin(angle) * engineDistance, -std::cos(angle) * engineDistance);
+    const sf::Vector2f engineOffset(
+        std::sin(angle) * engineDistance,
+        -std::cos(angle) * engineDistance
+    );
 
     engine.setPosition(shape.getPosition() + engineOffset);
     engine.setRotation(shape.getRotation());
 
-    auto it = projectiles.begin();
-    while (it != projectiles.end()) {
-        it->position += it->direction * it->speed * delta;
+    for (auto& projectile : projectiles) {
+        projectile.position +=
+            projectile.direction * projectile.speed * delta;
 
-        // Wrap around the screen
-        if (it->position.x < 0) it->position.x += SIZE_X;
-        else if (it->position.x > SIZE_X) it->position.x -= SIZE_X;
+        if (projectile.position.x < 0.f) {
+            projectile.position.x += SIZE_X;
+        } else if (projectile.position.x > SIZE_X) {
+            projectile.position.x -= SIZE_X;
+        }
 
-        if (it->position.y < 0) it->position.y += SIZE_Y;
-        else if (it->position.y > SIZE_Y) it->position.y -= SIZE_Y;
-
-        if (it->lifetime.getElapsedTime().asSeconds() > 1.2f) {
-            it = projectiles.erase(it);
-        } else {
-            ++it;
+        if (projectile.position.y < 0.f) {
+            projectile.position.y += SIZE_Y;
+        } else if (projectile.position.y > SIZE_Y) {
+            projectile.position.y -= SIZE_Y;
         }
     }
+
+    std::erase_if(projectiles, [](const Projectile& projectile) {
+        return projectile.lifetime.getElapsedTime().asSeconds() >
+               GameRules::PlayerProjectileLifetime;
+    });
 }
 
 void SpaceShip::rotate(float angle) {
@@ -124,7 +139,6 @@ void SpaceShip::updateEngine() {
     }
 }
 
-// initializes the shape of the spaceship.
 void SpaceShip::initShape() {
     shape.setPointCount(5);
 
@@ -143,7 +157,6 @@ void SpaceShip::initShape() {
     shape.setRotation(180);
 }
 
-// initializes the shape of the engine.
 void SpaceShip::initEngineShape() {
     engine.setPointCount(3);
 

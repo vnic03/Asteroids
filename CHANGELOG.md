@@ -14,6 +14,14 @@
 - Rapid individual presses fire without a player shot cooldown.
 - Player creation and selection now use Enter; the separate Alt action was removed.
 - Small aliens emit one aimed projectile instead of overlapping duplicates.
+- Separated movement, collision handling, wave scheduling and rendering from the main gameplay loop.
+- Centralized existing wave, enemy and projectile rules without intentionally changing gameplay balance.
+- Replaced square-root collision distance calculations with squared-distance comparisons.
+- Cached asteroid and alien collision radii after shape creation.
+- Changed expired player projectile cleanup to a single removal pass.
+- Reused projectile drawing shapes, the pause label and the life indicator shape.
+- Moved alien visual positioning into the update phase.
+- Avoided repeated stop calls for sounds that are already stopped.
 
 ### Fixed
 - Enemy movement being updated twice in cooperative mode.

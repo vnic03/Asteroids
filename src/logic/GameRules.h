@@ -51,10 +51,6 @@ inline constexpr int SmallAlienScore = 600;
 
 // Audio
 inline constexpr float AlienSoundSeconds = 1.8f;
-inline constexpr float InitialBeatInterval = 1.f;
-inline constexpr float MinimumBeatInterval = 0.35f;
-inline constexpr float BeatAccelerationInterval = 5.f;
-inline constexpr float BeatAccelerationFactor = 0.9f;
 
 enum class WaveType { INTRO, MIXED, FIELD, HUNT, DEBRIS, RECOVERY, ASSAULT };
 

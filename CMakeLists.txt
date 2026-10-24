@@ -34,6 +34,8 @@ target_sources(Asteroids PRIVATE
     src/logic/GameRenderer.h
     src/logic/GameRenderer.cpp
     src/logic/Progression.h
+    src/music/MusicDirector.h
+    src/music/MusicDirector.cpp
 )
 
 # SFML
@@ -64,7 +66,7 @@ include(InstallRequiredSystemLibraries)
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
 
 set(CPACK_PACKAGE_VERSION_MAJOR "1")
-set(CPACK_PACKAGE_VERSION_MINOR "0")
+set(CPACK_PACKAGE_VERSION_MINOR "1")
 set(CPACK_PACKAGE_VERSION_PATCH "0")
 set(CPACK_PACKAGE_NAME "Asteroids")
 set(CPACK_PACKAGE_RELEASE 1)

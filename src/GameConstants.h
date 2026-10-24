@@ -169,9 +169,6 @@ extern sf::Sound sBeat1, sBeat2, sSmallEx, sMediumEx, sBigEx, sFire, sThrust,
 bool loadSound(sf::SoundBuffer& buffer, sf::Sound& sound,
                const std::string& file);
 
-// Alternates between playing two beat sounds to create a rhythmic background
-void playBeat(sf::Sound& beat1, sf::Sound& beat2, bool sound);
-
 extern SimulationClock alienBTimer;
 extern SimulationClock alienSTimer;
 

@@ -1,101 +1,156 @@
-# Asteroids Clone in C++
+# Asteroids
 
-This project is my own version of the classic arcade game Asteroids, 
-implemented in C++ using the SFML library. Experience the nostalgia 
-of dodging and shooting asteroids in space and avoiding alien UFOs!
+My take on the classic arcade game, written in C++20 with SFML.
+Dodge asteroids, fight alien ships and chase highscores alone or with a friend.
 
-![Start Screen](assets/gameplay/start-screen.png)
+Linux is the currently supported release platform.
 
-### Choose Your Name
-Before starting the game, you can now enter a name or select an 
-existing one from the list.
+![Start screen](assets/gameplay/start-screen.png)
 
-![Choose Name](assets/gameplay/choose-name.png)
-*Choose your name and make it to the top of the leaderboard!*
+## Gameplay
 
-### New Feature: Co-op Mode
+Start with three lives and survive increasingly challenging waves.
 
-Now you can play together with a friend in the same round! 
+- Waves last 30 seconds. Remaining enemies carry over into the next wave.
+- Clear all enemies and scheduled spawns early to earn a bonus and start
+  a five-second break before the next wave.
+- Different wave types vary asteroid pressure and alien encounters.
+- Large aliens fire three-shot fans; small aliens fire aimed shots.
+- Earn extra lives at 3,000, 7,000 and 12,000 points, then every additional
+  6,000 points. You can hold up to five lives.
+- Temporary protection applies at the start and after respawning.
+- Music responds to the current danger instead of resetting every wave.
 
-![COOP](assets/gameplay/coop.png)
-*COOP*
+A hit costs one life. In solo mode, the run ends when you run out of lives.
+In cooperative mode, it ends when both players are out.
 
+![Gameplay](assets/gameplay/gameplay.png)
 
-### Highscores
-Compete against yourself or friends by beating highscores! Each name has 
-its own highscore, making it fun to try and top the leaderboard.
-Highscores and Player-Names  are saved, even after closing the game!
+## Local Co-op
 
-## Gameplay 
+Two players share the same screen, with separate scores and lives.
+Enemy arrivals increase while both players remain in the game.
 
-Experience intense asteroid dodging and shooting action.
-Navigate through fields of asteroids and fight off alien 
-invaders to achieve high scores!
+![Local cooperative mode](assets/gameplay/coop.png)
 
-[![Gameplay Screenshot](assets/gameplay/gameplay.png)](https://www.youtube.com/watch?v=26BmzsI9pHM)
-*The Picture does not do the game justice, klick on it to see GamePlay!*
+## Profiles and Highscores
 
-## Game Over 
+Create a profile or select an existing name before playing.
+Solo and cooperative highscores are stored separately.
 
-Don't let the asteroids hit you! If you get hit, it's game over!
+On Linux, scores are normally saved in:
 
-![Game Over Screenshot](assets/gameplay/game-over.png)
-*Don't worry you can always try again!*
+```text
+~/.local/share/asteroids/
+```
+
+If `XDG_DATA_HOME` is set to an absolute path, the game uses
+`$XDG_DATA_HOME/asteroids/` instead.
+
+Score storage includes backups and best-effort migration of older records.
+If saving fails, the game displays a message.
 
 ## Controls
 
-The game is playable with both the keyboard and a
-Controller, offering a flexible arcade experience.
+### Keyboard
 
-### Keyboard Controls:
+| Action | Solo / Player 1 | Player 2 |
+| --- | --- | --- |
+| Thrust | W | Up arrow |
+| Rotate left | A | Left arrow |
+| Rotate right | D | Right arrow |
+| Shoot | Space | Right Ctrl |
 
-- **Arrow Keys or A W D:** Move and Rotate the spaceship
-- **Space:** Shoot
-- **Enter:** Start the game
-- **P:** Pause the game
-- **M:** Turn Sounds on/off
-- **Esc:** Exit the game
+Each press fires one shot. Holding the fire button does not enable autofire.
 
-### Controller Controls:
+| Action | Key |
+| --- | --- |
+| Continue from the start screen | Enter |
+| Select solo / cooperative mode | 1 / 2 |
+| Pause / resume | P |
+| Toggle sound | M |
+| Exit during gameplay | Esc |
 
-*Only for PS4 Controller right now.*
+The game pauses when its window loses focus.
 
-- **Left Stick:** Rotate the spaceship
-- **X Button:** Shoot
-- **R2 Button:** Accelerate the spaceship
+### Controller
 
-### Choosing/Creating a Name:
+The current mapping targets PS4 controllers:
 
-- **Arrow Keys:** Navigate through the existing names list.
-- **Enter:** Select the highlighted name to start the game.
-- **Del:** Deletes a player and it's highscore.
+- Left stick: rotate.
+- X: shoot.
+- R2: thrust.
 
-## Running the Game
+In cooperative mode, the first and second controllers control Player 1
+and Player 2 respectively. Other controller mappings are not guaranteed.
 
-### Linux
+### Profile Selection
 
-The game is available for download as a ready-to-play package for Linux users. 
-You can find the latest release [here](https://github.com/vnic03/Asteroids/releases/tag/v1.0.0). 
-Download the appropriate file for your system:
+- Arrow keys: navigate profiles.
+- Type a name to create a profile.
+- Enter: confirm.
+- Delete: remove the selected profile and its saved scores.
 
-- `Asteroids-1.0.0-Linux.sh` for a shell script installer.
-- `Asteroids-1.0.0-Linux.tar.gz` for a gzipped tar archive.
-- `Asteroids-1.0.0-Linux.tar.Z` for a compressed tar archive.
+## Download
 
-Follow the installation instructions in the release notes to install and start playing "Asteroids"!
+Available builds and installation instructions are listed on the
+[GitHub Releases page](https://github.com/vnic03/Asteroids/releases).
 
-## Others
+Use the dependency instructions for the selected release.
+Windows and macOS support is not yet verified for version 1.1.
 
-Clone the repository and build the game using CMake. Ensure you have the SFML library installed on your system.
+## Build from Source
+
+Requirements:
+
+- A C++20-compatible compiler.
+- CMake 3.22.1 or newer.
+- SFML 2.6.x with graphics, window, system and audio components.
 
 ```bash
 git clone https://github.com/vnic03/Asteroids
 cd Asteroids
+
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j2
+
+./build/Asteroids
+```
+
+Alternatively, the Linux helper script builds and starts the game:
+
+```bash
 ./run.sh
 ```
 
-*Will be a downloadable for windows and mac soon!*
+CMake copies the required assets into the build directory.
 
-### Note
+## Configuration
 
-This is my first C++ project, built from scratch and aimed at learning the language. Thanks for playing^^
+The game supports these environment variables:
+
+| Variable | Purpose |
+| --- | --- |
+| `ASTEROIDS_ASSET_DIR` | Custom asset directory |
+| `ASTEROIDS_FONT` | Custom font file |
+| `ASTEROIDS_DATA_DIR` | Custom score storage directory |
+| `ASTEROIDS_LEGACY_DIR` | Directory containing legacy score files |
+
+Master, music and effects volumes can currently be adjusted in
+`src/music/AudioSettings.h`. There is no in-game volume settings menu yet.
+
+## Development
+
+C++ formatting is configured through `.clang-format`.
+The project currently uses clang-format 18 with an 80-column limit.
+
+```bash
+find src -type f \( -name '*.cpp' -o -name '*.h' \) \
+    -exec clang-format -i {} +
+```
+
+See [CHANGELOG.md](CHANGELOG.md) for release changes and
+[LICENSE](LICENSE) for licensing information.
+
+This is my first C++ project, built to learn the language.
+Thanks for playing!

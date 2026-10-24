@@ -9,6 +9,7 @@
 #include "GameConstants.h"
 #include "HighScores.h"
 #include "logic/logic.h"
+#include "music/AudioSettings.h"
 #include "scenes/Scenes.h"
 
 namespace fs = std::filesystem;
@@ -93,9 +94,22 @@ bool loadFont(sf::Font& font) {
 } // namespace
 
 void playSound(sf::Sound& sound) {
-    if (soundEnabled && sound.getBuffer() != nullptr) {
-        sound.play();
+    if (!soundEnabled || sound.getBuffer() == nullptr) {
+        return;
     }
+
+    float baseVolume = AudioSettings::OtherEffects;
+
+    if (&sound == &sThrust) {
+        baseVolume = AudioSettings::Thrust;
+    } else if (&sound == &sFire) {
+        baseVolume = AudioSettings::Fire;
+    }
+
+    sound.setVolume(baseVolume * AudioSettings::Master *
+                    AudioSettings::Effects);
+
+    sound.play();
 }
 
 void stopGameSounds() {
@@ -121,22 +135,6 @@ bool loadSound(sf::SoundBuffer& buffer, sf::Sound& sound,
     return true;
 }
 
-void playBeat(sf::Sound& beat1, sf::Sound& beat2, bool enabled) {
-    static bool first = true;
-
-    if (!enabled) {
-        return;
-    }
-
-    auto& sound = first ? beat1 : beat2;
-
-    if (sound.getStatus() != sf::Sound::Playing) {
-        playSound(sound);
-    }
-
-    first = !first;
-}
-
 int main(int argc, char** argv) {
     try {
         assetRoot = findAssetRoot(argc > 0 ? argv[0] : "Asteroids");
@@ -160,7 +158,6 @@ int main(int argc, char** argv) {
         loadSound(bAlienS, sAlienS, "alien-small.wav");
         loadSound(bGameOver, sGameOver, "game-over.wav");
 
-        sFire.setVolume(60.f);
         sThrust.setLoop(true);
 
         // Load or migrate before gameplay seeds its random generator.

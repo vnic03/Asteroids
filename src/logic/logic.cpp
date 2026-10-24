@@ -8,6 +8,7 @@
 #include <optional>
 #include <vector>
 
+#include "../music/MusicDirector.h"
 #include "Collisions.h"
 #include "GameRenderer.h"
 #include "GameRules.h"
@@ -108,10 +109,7 @@ std::pair<int, int> runGame(sf::RenderWindow& window, const sf::Font& font,
 
     sf::Clock frameClock;
 
-    SimulationClock beat;
-    SimulationClock soundSpeedTimer;
-
-    float beatInterval = GameRules::InitialBeatInterval;
+    MusicDirector music(sBeat1, sBeat2);
 
     std::srand(static_cast<unsigned>(std::time(nullptr)));
 
@@ -205,17 +203,8 @@ std::pair<int, int> runGame(sf::RenderWindow& window, const sf::Font& font,
 
             stopExpiredAlienSounds();
 
-            const int previousWave = waves.currentLevel();
-
             waves.update(delta, spaceships, firstPlayer, endPlayer, asteroids,
                          aliens, sound);
-
-            if (waves.currentLevel() != previousWave) {
-                beatInterval = GameRules::InitialBeatInterval;
-
-                soundSpeedTimer.restart();
-                beat.restart();
-            }
 
             updatePlayers(spaceships, firstPlayer, endPlayer, delta, sound);
 
@@ -257,22 +246,6 @@ std::pair<int, int> runGame(sf::RenderWindow& window, const sf::Font& font,
 
             updateThrustSound(spaceships, firstPlayer, endPlayer, sound);
 
-            if (!waves.resting() &&
-                soundSpeedTimer.getElapsedTime().asSeconds() >=
-                    GameRules::BeatAccelerationInterval) {
-                beatInterval =
-                    std::max(GameRules::MinimumBeatInterval,
-                             beatInterval * GameRules::BeatAccelerationFactor);
-
-                soundSpeedTimer.restart();
-            }
-
-            if (!waves.resting() &&
-                beat.getElapsedTime().asSeconds() >= beatInterval) {
-                playBeat(sBeat1, sBeat2, sound);
-                beat.restart();
-            }
-
             const bool gameOver =
                 coop ? spaceships[1].lives <= 0 && spaceships[2].lives <= 0
                      : spaceships[0].lives <= 0;
@@ -281,6 +254,13 @@ std::pair<int, int> runGame(sf::RenderWindow& window, const sf::Font& font,
                 state = GameState::GAME_OVER;
                 return result();
             }
+        }
+
+        if (!paused && !wasPaused && window.hasFocus()) {
+            music.update(frameDelta, waves, asteroids, aliens, spaceships,
+                         firstPlayer, endPlayer, sound && soundEnabled);
+        } else {
+            music.suspend();
         }
 
         renderer.draw(window, asteroids, aliens, spaceships, coop, score,

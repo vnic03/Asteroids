@@ -3,10 +3,7 @@
 #include <string>
 #include <vector>
 
-enum class ScoreMode {
-    Solo,
-    Coop
-};
+enum class ScoreMode { Solo, Coop };
 
 struct HighScore {
     std::string name;
@@ -16,15 +13,10 @@ struct HighScore {
 
 bool validPlayerName(const std::string& name);
 
-std::vector<HighScore> readHighScores(
-    ScoreMode mode = ScoreMode::Solo
-);
+std::vector<HighScore> readHighScores(ScoreMode mode = ScoreMode::Solo);
 
-bool writeHighScore(
-    const std::string& name,
-    int score,
-    ScoreMode mode = ScoreMode::Solo
-);
+bool writeHighScore(const std::string& name, int score,
+                    ScoreMode mode = ScoreMode::Solo);
 
 bool removePlayer(const std::string& name);
 

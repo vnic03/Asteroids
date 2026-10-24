@@ -41,8 +41,7 @@ fs::path configuredPath(const char* variable) {
 }
 
 fs::path dataDirectory() {
-    if (auto custom = configuredPath("ASTEROIDS_DATA_DIR");
-        !custom.empty()) {
+    if (auto custom = configuredPath("ASTEROIDS_DATA_DIR"); !custom.empty()) {
         return custom;
     }
 
@@ -73,10 +72,8 @@ std::vector<Profile> loadFile(const fs::path& path) {
     int version = 0;
     std::size_t count = 0;
 
-    if (!(input >> magic >> version >> count) ||
-        magic != "ASTEROIDS_SCORES" ||
-        version != 1 ||
-        count > MAX_RECORDS) {
+    if (!(input >> magic >> version >> count) || magic != "ASTEROIDS_SCORES" ||
+        version != 1 || count > MAX_RECORDS) {
         throw std::runtime_error("Invalid score file header");
     }
 
@@ -89,24 +86,17 @@ std::vector<Profile> loadFile(const fs::path& path) {
         input >> std::ws;
 
         if (input.peek() != '"' ||
-            !(input >> std::quoted(profile.name)
-                    >> profile.solo
-                    >> profile.coop
-                    >> profile.legacy) ||
-            !validPlayerName(profile.name) ||
-            profile.solo < 0 ||
-            profile.coop < 0 ||
-            profile.legacy < 0) {
+            !(input >> std::quoted(profile.name) >> profile.solo >>
+              profile.coop >> profile.legacy) ||
+            !validPlayerName(profile.name) || profile.solo < 0 ||
+            profile.coop < 0 || profile.legacy < 0) {
             throw std::runtime_error("Invalid score record");
         }
 
         const bool duplicate = std::any_of(
-            profiles.begin(),
-            profiles.end(),
-            [&](const Profile& existing) {
+            profiles.begin(), profiles.end(), [&](const Profile& existing) {
                 return existing.name == profile.name;
-            }
-        );
+            });
 
         if (duplicate) {
             throw std::runtime_error("Duplicate player name");
@@ -157,22 +147,17 @@ std::optional<unsigned long> legacyKey(const fs::path& directory) {
     return std::nullopt;
 }
 
-std::string decodeLegacy(
-    const std::string& data,
-    unsigned long key
-) {
+std::string decodeLegacy(const std::string& data, unsigned long key) {
     // Only used once during migration, before runGame seeds gameplay RNG.
     std::srand(static_cast<unsigned>(key));
 
     std::string decoded = data;
 
     for (char& character : decoded) {
-        const auto byte =
-            static_cast<unsigned char>(std::rand() % 256);
+        const auto byte = static_cast<unsigned char>(std::rand() % 256);
 
-        character = static_cast<char>(
-            static_cast<unsigned char>(character) ^ byte
-        );
+        character =
+            static_cast<char>(static_cast<unsigned char>(character) ^ byte);
     }
 
     return decoded;
@@ -224,20 +209,14 @@ struct Store {
 
             const auto lockPath = directory / "scores.lock";
 
-            lockFd = ::open(
-                lockPath.c_str(),
-                O_CREAT | O_RDWR | O_CLOEXEC,
-                0600
-            );
+            lockFd =
+                ::open(lockPath.c_str(), O_CREAT | O_RDWR | O_CLOEXEC, 0600);
 
-            writable =
-                lockFd >= 0 &&
-                ::flock(lockFd, LOCK_EX | LOCK_NB) == 0;
+            writable = lockFd >= 0 && ::flock(lockFd, LOCK_EX | LOCK_NB) == 0;
 
             if (!writable) {
-                error =
-                    "Scores are session-only: another game may be running\n"
-                    "or the data directory is not writable.";
+                error = "Scores are session-only: another game may be running\n"
+                        "or the data directory is not writable.";
             }
 
             if (fs::exists(file)) {
@@ -246,9 +225,8 @@ struct Store {
                     primaryValid = true;
                     return;
                 } catch (const std::exception& exception) {
-                    std::cerr
-                        << "Cannot read " << file << ": "
-                        << exception.what() << '\n';
+                    std::cerr << "Cannot read " << file << ": "
+                              << exception.what() << '\n';
                 }
 
                 recoverBackup();
@@ -260,8 +238,7 @@ struct Store {
                 return;
             }
 
-            auto legacyDirectory =
-                configuredPath("ASTEROIDS_LEGACY_DIR");
+            auto legacyDirectory = configuredPath("ASTEROIDS_LEGACY_DIR");
 
             if (legacyDirectory.empty()) {
                 legacyDirectory = fs::current_path();
@@ -271,9 +248,8 @@ struct Store {
 
         } catch (const std::exception& exception) {
             writable = false;
-            error =
-                "Scores are session-only: storage initialization failed.\n"
-                "See terminal output for details.";
+            error = "Scores are session-only: storage initialization failed.\n"
+                    "See terminal output for details.";
 
             std::cerr << "Highscores: " << exception.what() << '\n';
         }
@@ -294,19 +270,16 @@ struct Store {
         try {
             profiles = loadFile(backup);
 
-            error =
-                "Backup loaded for this session. Saving is disabled.\n"
-                "Repair the score files before the next session.";
+            error = "Backup loaded for this session. Saving is disabled.\n"
+                    "Repair the score files before the next session.";
 
         } catch (const std::exception& exception) {
             profiles.clear();
 
-            error =
-                "Score files could not be read. Saving is disabled.\n"
-                "Existing files have been preserved.";
+            error = "Score files could not be read. Saving is disabled.\n"
+                    "Existing files have been preserved.";
 
-            std::cerr
-                << "Highscore recovery: " << exception.what() << '\n';
+            std::cerr << "Highscore recovery: " << exception.what() << '\n';
         }
     }
 
@@ -348,17 +321,13 @@ struct Store {
                 continue;
             }
 
-            auto existing = std::find_if(
-                profiles.begin(),
-                profiles.end(),
-                [&](const Profile& entry) {
-                    return entry.name == profile.name;
-                }
-            );
+            auto existing = std::find_if(profiles.begin(), profiles.end(),
+                                         [&](const Profile& entry) {
+                                             return entry.name == profile.name;
+                                         });
 
             if (existing != profiles.end()) {
-                existing->legacy =
-                    std::max(existing->legacy, profile.legacy);
+                existing->legacy = std::max(existing->legacy, profile.legacy);
             } else if (profiles.size() < MAX_RECORDS) {
                 profiles.push_back(std::move(profile));
             } else {
@@ -370,13 +339,12 @@ struct Store {
             throw std::runtime_error("Legacy file read failed");
         }
 
-        notice =
-            "Legacy import: " + std::to_string(profiles.size()) +
-            " profiles; " + std::to_string(skipped) +
-            " unreadable fragments skipped.";
+        notice = "Legacy import: " + std::to_string(profiles.size()) +
+                 " profiles; " + std::to_string(skipped) +
+                 " unreadable fragments skipped.";
 
-        std::cerr << notice << "\nOriginal files preserved: "
-                  << directory << '\n';
+        std::cerr << notice << "\nOriginal files preserved: " << directory
+                  << '\n';
 
         save();
     }
@@ -392,23 +360,16 @@ struct Store {
         try {
             {
                 std::ofstream output;
-                output.exceptions(
-                    std::ios::failbit | std::ios::badbit
-                );
+                output.exceptions(std::ios::failbit | std::ios::badbit);
 
-                output.open(
-                    temporary,
-                    std::ios::binary | std::ios::trunc
-                );
+                output.open(temporary, std::ios::binary | std::ios::trunc);
 
-                output << "ASTEROIDS_SCORES 1 "
-                       << profiles.size() << '\n';
+                output << "ASTEROIDS_SCORES 1 " << profiles.size() << '\n';
 
                 for (const auto& profile : profiles) {
-                    output << std::quoted(profile.name) << ' '
-                           << profile.solo << ' '
-                           << profile.coop << ' '
-                           << profile.legacy << '\n';
+                    output << std::quoted(profile.name) << ' ' << profile.solo
+                           << ' ' << profile.coop << ' ' << profile.legacy
+                           << '\n';
                 }
 
                 output << "END\n";
@@ -416,11 +377,8 @@ struct Store {
             }
 
             if (primaryValid) {
-                fs::copy_file(
-                    file,
-                    backupTemporary,
-                    fs::copy_options::overwrite_existing
-                );
+                fs::copy_file(file, backupTemporary,
+                              fs::copy_options::overwrite_existing);
 
                 fs::rename(backupTemporary, backup);
             }
@@ -433,12 +391,10 @@ struct Store {
             return true;
 
         } catch (const std::exception& exception) {
-            error =
-                "Changes are session-only: saving failed.\n"
-                "See terminal output for details.";
+            error = "Changes are session-only: saving failed.\n"
+                    "See terminal output for details.";
 
-            std::cerr << "Saving highscores: "
-                      << exception.what() << '\n';
+            std::cerr << "Saving highscores: " << exception.what() << '\n';
 
             return false;
         }
@@ -450,7 +406,7 @@ Store& store() {
     return instance;
 }
 
-}
+} // namespace
 
 bool validPlayerName(const std::string& name) {
     if (name.empty() || name.size() > 32) {
@@ -474,33 +430,24 @@ std::vector<HighScore> readHighScores(ScoreMode mode) {
     std::vector<HighScore> result;
 
     for (const auto& profile : store().profiles) {
-        result.push_back({
-            profile.name,
-            mode == ScoreMode::Solo ? profile.solo : profile.coop,
-            profile.legacy
-        });
+        result.push_back({profile.name,
+                          mode == ScoreMode::Solo ? profile.solo : profile.coop,
+                          profile.legacy});
     }
 
-    std::sort(
-        result.begin(),
-        result.end(),
-        [](const HighScore& left, const HighScore& right) {
-            if (left.score != right.score) {
-                return left.score > right.score;
-            }
+    std::sort(result.begin(), result.end(),
+              [](const HighScore& left, const HighScore& right) {
+                  if (left.score != right.score) {
+                      return left.score > right.score;
+                  }
 
-            return left.name < right.name;
-        }
-    );
+                  return left.name < right.name;
+              });
 
     return result;
 }
 
-bool writeHighScore(
-    const std::string& name,
-    int score,
-    ScoreMode mode
-) {
+bool writeHighScore(const std::string& name, int score, ScoreMode mode) {
     auto& data = store();
 
     if (!validPlayerName(name) || score < 0) {
@@ -508,13 +455,9 @@ bool writeHighScore(
         return false;
     }
 
-    auto profile = std::find_if(
-        data.profiles.begin(),
-        data.profiles.end(),
-        [&](const Profile& entry) {
-            return entry.name == name;
-        }
-    );
+    auto profile =
+        std::find_if(data.profiles.begin(), data.profiles.end(),
+                     [&](const Profile& entry) { return entry.name == name; });
 
     if (profile == data.profiles.end()) {
         if (data.profiles.size() >= MAX_RECORDS) {
@@ -535,9 +478,8 @@ bool writeHighScore(
 bool removePlayer(const std::string& name) {
     auto& data = store();
 
-    std::erase_if(data.profiles, [&](const Profile& profile) {
-        return profile.name == name;
-    });
+    std::erase_if(data.profiles,
+                  [&](const Profile& profile) { return profile.name == name; });
 
     return data.save();
 }
@@ -545,9 +487,11 @@ bool removePlayer(const std::string& name) {
 std::string highScoreStatus() {
     const auto& data = store();
 
-    if (data.notice.empty()) return data.error;
+    if (data.notice.empty())
+        return data.error;
 
-    if (data.error.empty()) return data.notice;
+    if (data.error.empty())
+        return data.notice;
 
     return data.notice + '\n' + data.error;
 }

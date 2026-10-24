@@ -1,5 +1,5 @@
-#include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
+#include <SFML/Graphics.hpp>
 
 #include <cstdlib>
 #include <filesystem>
@@ -48,10 +48,8 @@ fs::path findAssetRoot(const char* executableArgument) {
 
     candidates.push_back(executableDirectory / "assets");
 
-    candidates.push_back(
-        executableDirectory / ".." /
-        "share" / "Asteroids" / "assets"
-    );
+    candidates.push_back(executableDirectory / ".." / "share" / "Asteroids" /
+                         "assets");
 
     candidates.push_back(fs::current_path() / "assets");
 
@@ -69,20 +67,16 @@ fs::path findAssetRoot(const char* executableArgument) {
 bool loadFont(sf::Font& font) {
     std::vector<fs::path> candidates;
 
-    if (const char* custom = std::getenv("ASTEROIDS_FONT");
-        custom && *custom) {
+    if (const char* custom = std::getenv("ASTEROIDS_FONT"); custom && *custom) {
         candidates.emplace_back(custom);
     }
 
     candidates.push_back(assetRoot / "font" / "arcade-font.otf");
 
-    candidates.emplace_back(
-        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
-    );
+    candidates.emplace_back("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf");
 
     candidates.emplace_back(
-        "/usr/share/fonts/truetype/liberation2/LiberationSans-Regular.ttf"
-    );
+        "/usr/share/fonts/truetype/liberation2/LiberationSans-Regular.ttf");
 
     for (const auto& candidate : candidates) {
         if (font.loadFromFile(candidate.string())) {
@@ -90,14 +84,13 @@ bool loadFont(sf::Font& font) {
         }
     }
 
-    std::cerr
-        << "No usable font found. Restore assets/font/arcade-font.otf\n"
-        << "or set ASTEROIDS_FONT to a valid font file.\n";
+    std::cerr << "No usable font found. Restore assets/font/arcade-font.otf\n"
+              << "or set ASTEROIDS_FONT to a valid font file.\n";
 
     return false;
 }
 
-}
+} // namespace
 
 void playSound(sf::Sound& sound) {
     if (soundEnabled && sound.getBuffer() != nullptr) {
@@ -106,23 +99,17 @@ void playSound(sf::Sound& sound) {
 }
 
 void stopGameSounds() {
-    sf::Sound* sounds[] = {
-        &sBeat1, &sBeat2,
-        &sSmallEx, &sMediumEx, &sBigEx,
-        &sFire, &sThrust, &sEx,
-        &sAlienB, &sAlienS, &sGameOver
-    };
+    sf::Sound* sounds[] = {&sBeat1,  &sBeat2,  &sSmallEx, &sMediumEx,
+                           &sBigEx,  &sFire,   &sThrust,  &sEx,
+                           &sAlienB, &sAlienS, &sGameOver};
 
     for (auto* sound : sounds) {
         sound->stop();
     }
 }
 
-bool loadSound(
-    sf::SoundBuffer& buffer,
-    sf::Sound& sound,
-    const std::string& filename
-) {
+bool loadSound(sf::SoundBuffer& buffer, sf::Sound& sound,
+               const std::string& filename) {
     const auto path = assetRoot / "sound" / filename;
 
     if (!buffer.loadFromFile(path.string())) {
@@ -179,10 +166,7 @@ int main(int argc, char** argv) {
         // Load or migrate before gameplay seeds its random generator.
         readHighScores();
 
-        sf::RenderWindow window(
-            sf::VideoMode(SIZE_X, SIZE_Y),
-            "Asteroids"
-        );
+        sf::RenderWindow window(sf::VideoMode(SIZE_X, SIZE_Y), "Asteroids");
 
         window.setFramerateLimit(60);
         window.setKeyRepeatEnabled(false);
@@ -198,82 +182,74 @@ int main(int argc, char** argv) {
 
         while (window.isOpen()) {
             switch (state) {
-                case GameState::START_SCREEN:
-                    if (startScreen(window, font)) {
-                        state = chooseGameMode(window, font);
-                    } else {
-                        window.close();
-                    }
-                    break;
+            case GameState::START_SCREEN:
+                if (startScreen(window, font)) {
+                    state = chooseGameMode(window, font);
+                } else {
+                    window.close();
+                }
+                break;
 
-                case GameState::CHOOSE_NAME:
-                    window.setSize(sf::Vector2u(SIZE_X, SIZE_Y));
-                    player1 = chooseName(window, font);
+            case GameState::CHOOSE_NAME:
+                window.setSize(sf::Vector2u(SIZE_X, SIZE_Y));
+                player1 = chooseName(window, font);
 
-                    if (player1.empty()) {
-                        window.close();
-                        break;
-                    }
-
-                    player2.clear();
-                    score = 0;
-                    score2 = 0;
-                    state = GameState::RUNNING;
-                    break;
-
-                case GameState::COOP_CHOOSE_NAME: {
-                    window.setSize(
-                        sf::Vector2u(SIZE_X + 250, SIZE_Y + 100)
-                    );
-
-                    const auto names = chooseNames(window, font);
-                    player1 = names.first;
-                    player2 = names.second;
-
-                    if (player1.empty() || player2.empty()) {
-                        window.close();
-                        break;
-                    }
-
-                    score = 0;
-                    score2 = 0;
-                    state = GameState::COOP_RUNNING;
+                if (player1.empty()) {
+                    window.close();
                     break;
                 }
 
-                case GameState::RUNNING:
-                case GameState::COOP_RUNNING: {
-                    const bool coop =
-                        state == GameState::COOP_RUNNING;
+                player2.clear();
+                score = 0;
+                score2 = 0;
+                state = GameState::RUNNING;
+                break;
 
-                    scores = runGame(
-                        window, font, state, score, score2
-                    );
+            case GameState::COOP_CHOOSE_NAME: {
+                window.setSize(sf::Vector2u(SIZE_X + 250, SIZE_Y + 100));
 
-                    if (!window.isOpen()) {
-                        const auto mode =
-                            coop ? ScoreMode::Coop : ScoreMode::Solo;
+                const auto names = chooseNames(window, font);
+                player1 = names.first;
+                player2 = names.second;
 
-                        writeHighScore(player1, scores.first, mode);
-
-                        if (coop) {
-                            writeHighScore(player2, scores.second, mode);
-                        }
-                    }
-
-                    state = GameState::GAME_OVER;
+                if (player1.empty() || player2.empty()) {
+                    window.close();
                     break;
                 }
 
-                case GameState::GAME_OVER:
-                    gameOver(
-                        window, scores, font, state, player1, player2
-                    );
+                score = 0;
+                score2 = 0;
+                state = GameState::COOP_RUNNING;
+                break;
+            }
 
-                    if (window.isOpen()) {
-                        state = chooseGameMode(window, font);
+            case GameState::RUNNING:
+            case GameState::COOP_RUNNING: {
+                const bool coop = state == GameState::COOP_RUNNING;
+
+                scores = runGame(window, font, state, score, score2);
+
+                if (!window.isOpen()) {
+                    const auto mode = coop ? ScoreMode::Coop : ScoreMode::Solo;
+
+                    writeHighScore(player1, scores.first, mode);
+
+                    if (coop) {
+                        writeHighScore(player2, scores.second, mode);
                     }
-                    break;
+                }
+
+                state = GameState::GAME_OVER;
+                break;
+            }
+
+            case GameState::GAME_OVER:
+                gameOver(window, scores, font, state, player1, player2);
+
+                if (window.isOpen()) {
+                    state = chooseGameMode(window, font);
+                }
+                break;
             }
         }
 

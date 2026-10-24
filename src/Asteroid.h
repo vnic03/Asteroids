@@ -10,15 +10,10 @@
 #include "GameConstants.h"
 #include "logic/GameRules.h"
 
-
-enum class AsteroidSize {
-    BIG,
-    MEDIUM,
-    SMALL
-};
+enum class AsteroidSize { BIG, MEDIUM, SMALL };
 
 class Asteroid {
-public:
+  public:
     sf::ConvexShape shape;
     sf::Vector2f velocity;
 
@@ -28,30 +23,28 @@ public:
     float collisionRadius = 0.f;
     int spawnLevel = 1;
 
-    explicit Asteroid(AsteroidSize size)
-        : size(size) {
+    explicit Asteroid(AsteroidSize size) : size(size) {
         switch (size) {
-            case AsteroidSize::BIG:
-                hp = 4;
-                break;
-            case AsteroidSize::MEDIUM:
-                hp = 2;
-                break;
-            case AsteroidSize::SMALL:
-                hp = 1;
-                break;
+        case AsteroidSize::BIG:
+            hp = 4;
+            break;
+        case AsteroidSize::MEDIUM:
+            hp = 2;
+            break;
+        case AsteroidSize::SMALL:
+            hp = 1;
+            break;
         }
     }
 
     int fragmentWeight() const {
-        return size == AsteroidSize::BIG ? 4 :
-               size == AsteroidSize::MEDIUM ? 2 : 1;
+        return size == AsteroidSize::BIG      ? 4
+               : size == AsteroidSize::MEDIUM ? 2
+                                              : 1;
     }
 
-    static std::vector<std::unique_ptr<Asteroid>> initAsteroids(
-        int amount,
-        int level
-    ) {
+    static std::vector<std::unique_ptr<Asteroid>> initAsteroids(int amount,
+                                                                int level) {
         std::vector<std::unique_ptr<Asteroid>> asteroids;
 
         if (amount > 0) {
@@ -59,8 +52,7 @@ public:
         }
 
         for (int i = 0; i < amount; ++i) {
-            const auto size =
-                static_cast<AsteroidSize>(std::rand() % 3);
+            const auto size = static_cast<AsteroidSize>(std::rand() % 3);
 
             auto asteroid = std::make_unique<Asteroid>(size);
             asteroid->initShape(level);
@@ -77,40 +69,30 @@ public:
 
         spawnLevel = level;
 
-        const float base =
-            size == AsteroidSize::BIG ? 30.f :
-            size == AsteroidSize::MEDIUM ? 20.f : 10.f;
+        const float base = size == AsteroidSize::BIG      ? 30.f
+                           : size == AsteroidSize::MEDIUM ? 20.f
+                                                          : 10.f;
 
-        const float speed = GameRules::asteroidSpeed(
-            static_cast<int>(size),
-            level
-        );
+        const float speed =
+            GameRules::asteroidSpeed(static_cast<int>(size), level);
 
         for (int i = 0; i < points; ++i) {
             const float angle = (i * 360.f / points) * (M_PI / 180.f);
 
-            const float variation = 0.8f +
-                static_cast<float>(std::rand() % 40) / 100.f;
+            const float variation =
+                0.8f + static_cast<float>(std::rand() % 40) / 100.f;
 
             const float radius = base * variation;
 
-            shape.setPoint(i, {
-                radius * std::cos(angle),
-                radius * std::sin(angle)
-            });
+            shape.setPoint(
+                i, {radius * std::cos(angle), radius * std::sin(angle)});
         }
 
-        shape.setPosition(
-            std::rand() % SIZE_X,
-            std::rand() % SIZE_Y
-        );
+        shape.setPosition(std::rand() % SIZE_X, std::rand() % SIZE_Y);
 
         const float heading = (std::rand() % 360) * GameRules::Pi / 180.f;
 
-        velocity = {
-            std::cos(heading) * speed,
-            std::sin(heading) * speed
-        };
+        velocity = {std::cos(heading) * speed, std::sin(heading) * speed};
 
         shape.setFillColor(sf::Color::Transparent);
         shape.setOutlineThickness(1.5f);

@@ -3,44 +3,31 @@
 #include <memory>
 #include <vector>
 
-#include "WaveController.h"
 #include "Progression.h"
+#include "WaveController.h"
 
 #include "../Asteroid.h"
 #include "../alien/Alien.h"
 #include "../spaceship/Spaceship.h"
 
 class GameRenderer {
-public:
+  public:
     explicit GameRenderer(const sf::Font& font);
 
-    void draw(
-        sf::RenderWindow& window,
-        const std::vector<std::unique_ptr<Asteroid>>& asteroids,
-        const std::vector<std::unique_ptr<Alien>>& aliens,
-        SpaceShip* spaceships,
-        bool coop,
-        int score,
-        int score2,
-        bool paused,
-        const WaveController& waves,
-        const Progression& progression
-    );
+    void draw(sf::RenderWindow& window,
+              const std::vector<std::unique_ptr<Asteroid>>& asteroids,
+              const std::vector<std::unique_ptr<Alien>>& aliens,
+              SpaceShip* spaceships, bool coop, int score, int score2,
+              bool paused, const WaveController& waves,
+              const Progression& progression);
 
-private:
+  private:
     sf::Text pauseText;
     sf::Text hudText;
     sf::ConvexShape lifeShape;
 
-    void drawScore(
-        sf::RenderWindow& window,
-        int id,
-        int score
-    );
+    void drawScore(sf::RenderWindow& window, int id, int score);
 
-    void drawLives(
-        sf::RenderWindow& window,
-        const SpaceShip& spaceship,
-        float y
-    );
+    void drawLives(sf::RenderWindow& window, const SpaceShip& spaceship,
+                   float y);
 };

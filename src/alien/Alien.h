@@ -2,49 +2,41 @@
 
 #include <SFML/Graphics.hpp>
 
-#include "../MovableEntity.h"
 #include "../GameConstants.h"
+#include "../MovableEntity.h"
 
-enum class AlienSize {
-    BIG,
-    SMALL
-};
+enum class AlienSize { BIG, SMALL };
 
 class Alien : public MovableEntity {
-public:
+  public:
     AlienSize alienSize;
     float collisionRadius = 0.f;
 
-    explicit Alien(
-        AlienSize size,
-        int level = 1,
-        std::optional<sf::Vector2f> position = std::nullopt
-    );
+    explicit Alien(AlienSize size, int level = 1,
+                   std::optional<sf::Vector2f> position = std::nullopt);
 
     void draw(sf::RenderWindow& window) override;
 
     void update(float delta, bool sound) override;
 
-    void shoot(
-        bool sound,
-        std::optional<sf::Vector2f> playerPos = std::nullopt
-    ) override;
+    void shoot(bool sound,
+               std::optional<sf::Vector2f> playerPos = std::nullopt) override;
 
     void explode(bool sound) override;
 
-    bool isDestroyed() const {
-        return lives <= 0;
-    }
+    bool isDestroyed() const { return lives <= 0; }
 
     void takeDamage(bool sound) {
-        if (isDestroyed()) return;
+        if (isDestroyed())
+            return;
 
         --lives;
 
-        if (lives <= 0) explode(sound);
+        if (lives <= 0)
+            explode(sound);
     }
 
-private:
+  private:
     void initShape() override;
     void updateVisualPositions();
 

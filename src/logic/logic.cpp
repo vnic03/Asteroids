@@ -12,8 +12,8 @@
 #include "GameRenderer.h"
 #include "GameRules.h"
 #include "Movement.h"
-#include "WaveController.h"
 #include "Progression.h"
+#include "WaveController.h"
 
 namespace {
 
@@ -31,33 +31,16 @@ void stopExpiredAlienSounds() {
     }
 }
 
-void updatePlayers(
-    SpaceShip* spaceships,
-    int firstPlayer,
-    int endPlayer,
-    float delta,
-    bool sound
-) {
+void updatePlayers(SpaceShip* spaceships, int firstPlayer, int endPlayer,
+                   float delta, bool sound) {
     for (int i = firstPlayer; i < endPlayer; ++i) {
         auto& ship = spaceships[i];
 
         if (!ship.explosion && ship.lives > 0) {
             if (i == 2) {
-                handlePlayerInput(
-                    ship,
-                    delta,
-                    COOP_LEFT,
-                    COOP_RIGHT,
-                    COOP_UP
-                );
+                handlePlayerInput(ship, delta, COOP_LEFT, COOP_RIGHT, COOP_UP);
             } else {
-                handlePlayerInput(
-                    ship,
-                    delta,
-                    LEFT,
-                    RIGHT,
-                    UP
-                );
+                handlePlayerInput(ship, delta, LEFT, RIGHT, UP);
             }
         }
 
@@ -65,17 +48,12 @@ void updatePlayers(
     }
 }
 
-void updateAlienShooting(
-    std::vector<std::unique_ptr<Alien>>& aliens,
-    const SpaceShip* spaceships,
-    int firstPlayer,
-    int endPlayer,
-    bool sound
-) {
+void updateAlienShooting(std::vector<std::unique_ptr<Alien>>& aliens,
+                         const SpaceShip* spaceships, int firstPlayer,
+                         int endPlayer, bool sound) {
     for (auto& alien : aliens) {
         std::optional<sf::Vector2f> target;
-        float bestDistance =
-            std::numeric_limits<float>::max();
+        float bestDistance = std::numeric_limits<float>::max();
 
         for (int i = firstPlayer; i < endPlayer; ++i) {
             const auto& ship = spaceships[i];
@@ -85,12 +63,10 @@ void updateAlienShooting(
             }
 
             const auto difference =
-                ship.shape.getPosition() -
-                alien->shape.getPosition();
+                ship.shape.getPosition() - alien->shape.getPosition();
 
             const float distance =
-                difference.x * difference.x +
-                difference.y * difference.y;
+                difference.x * difference.x + difference.y * difference.y;
 
             if (distance < bestDistance) {
                 bestDistance = distance;
@@ -103,21 +79,15 @@ void updateAlienShooting(
     }
 }
 
-void updateThrustSound(
-    const SpaceShip* spaceships,
-    int firstPlayer,
-    int endPlayer,
-    bool sound
-) {
+void updateThrustSound(const SpaceShip* spaceships, int firstPlayer,
+                       int endPlayer, bool sound) {
     bool thrusting = false;
 
     for (int i = firstPlayer; i < endPlayer; ++i) {
         const auto& ship = spaceships[i];
 
-        thrusting |=
-            !ship.explosion &&
-            ship.lives > 0 &&
-            (ship.engineOn || ship.engineOnC);
+        thrusting |= !ship.explosion && ship.lives > 0 &&
+                     (ship.engineOn || ship.engineOnC);
     }
 
     if (sound && thrusting) {
@@ -131,13 +101,8 @@ void updateThrustSound(
 
 } // namespace
 
-std::pair<int, int> runGame(
-    sf::RenderWindow& window,
-    const sf::Font& font,
-    GameState& state,
-    int& score,
-    int& score2
-) {
+std::pair<int, int> runGame(sf::RenderWindow& window, const sf::Font& font,
+                            GameState& state, int& score, int& score2) {
     bool paused = false;
     bool sound = soundEnabled;
 
@@ -150,11 +115,7 @@ std::pair<int, int> runGame(
 
     std::srand(static_cast<unsigned>(std::time(nullptr)));
 
-    SpaceShip spaceships[] = {
-        SpaceShip(0),
-        SpaceShip(1),
-        SpaceShip(2)
-    };
+    SpaceShip spaceships[] = {SpaceShip(0), SpaceShip(1), SpaceShip(2)};
 
     const bool coop = state == GameState::COOP_RUNNING;
     const int firstPlayer = coop ? 1 : 0;
@@ -175,8 +136,7 @@ std::pair<int, int> runGame(
     };
 
     while (window.isOpen()) {
-        const float frameDelta =
-            frameClock.restart().asSeconds();
+        const float frameDelta = frameClock.restart().asSeconds();
 
         const bool wasPaused = paused;
 
@@ -219,38 +179,26 @@ std::pair<int, int> runGame(
             if (event.type == sf::Event::KeyPressed) {
                 if (event.key.code == SHOOT) {
                     spaceships[coop ? 1 : 0].shoot(sound);
-                } else if (
-                    coop &&
-                    event.key.code == COOP_SHOOT
-                ) {
+                } else if (coop && event.key.code == COOP_SHOOT) {
                     spaceships[2].shoot(sound);
                 }
             }
 
-            if (event.type ==
-                    sf::Event::JoystickButtonPressed &&
+            if (event.type == sf::Event::JoystickButtonPressed &&
                 event.joystickButton.button == 0) {
                 if (event.joystickButton.joystickId == 0) {
                     spaceships[coop ? 1 : 0].shoot(sound);
-                } else if (
-                    coop &&
-                    event.joystickButton.joystickId == 1
-                ) {
+                } else if (coop && event.joystickButton.joystickId == 1) {
                     spaceships[2].shoot(sound);
                 }
             }
         }
 
         float remaining =
-            (!paused && !wasPaused && window.hasFocus())
-                ? frameDelta
-                : 0.f;
+            (!paused && !wasPaused && window.hasFocus()) ? frameDelta : 0.f;
 
         while (remaining > 0.f) {
-            const float delta = std::min(
-                remaining,
-                GameRules::MaxFrameDelta
-            );
+            const float delta = std::min(remaining, GameRules::MaxFrameDelta);
 
             remaining -= delta;
             SimulationClock::advance(delta);
@@ -259,31 +207,17 @@ std::pair<int, int> runGame(
 
             const int previousWave = waves.currentLevel();
 
-            waves.update(
-                delta,
-                spaceships,
-                firstPlayer,
-                endPlayer,
-                asteroids,
-                aliens,
-                sound
-            );
+            waves.update(delta, spaceships, firstPlayer, endPlayer, asteroids,
+                         aliens, sound);
 
             if (waves.currentLevel() != previousWave) {
-                beatInterval =
-                    GameRules::InitialBeatInterval;
+                beatInterval = GameRules::InitialBeatInterval;
 
                 soundSpeedTimer.restart();
                 beat.restart();
             }
 
-            updatePlayers(
-                spaceships,
-                firstPlayer,
-                endPlayer,
-                delta,
-                sound
-            );
+            updatePlayers(spaceships, firstPlayer, endPlayer, delta, sound);
 
             // Update the world once per simulation step.
             moveAsteroids(asteroids, delta);
@@ -293,89 +227,55 @@ std::pair<int, int> runGame(
             }
 
             for (int i = firstPlayer; i < endPlayer; ++i) {
-                int& playerScore =
-                    i == 2 ? score2 : score;
+                int& playerScore = i == 2 ? score2 : score;
 
-                resolveAsteroidCollisions(
-                    asteroids,
-                    spaceships[i],
-                    playerScore,
-                    waves.currentLevel(),
-                    sound
-                );
+                resolveAsteroidCollisions(asteroids, spaceships[i], playerScore,
+                                          waves.currentLevel(), sound);
 
-                resolveAlienCollisions(
-                    aliens,
-                    spaceships[i],
-                    playerScore,
-                    sound
-                );
+                resolveAlienCollisions(aliens, spaceships[i], playerScore,
+                                       sound);
             }
 
-            std::erase_if(aliens, [](const auto& alien) {
-                return alien->isDestroyed();
-            });
+            std::erase_if(
+                aliens, [](const auto& alien) { return alien->isDestroyed(); });
 
-            const int bonus = waves.finishFrame(
-                asteroids.empty() && aliens.empty()
-            );
+            const int bonus =
+                waves.finishFrame(asteroids.empty() && aliens.empty());
 
             for (int i = firstPlayer; i < endPlayer; ++i) {
-                int& playerScore =
-                    i == 2 ? score2 : score;
+                int& playerScore = i == 2 ? score2 : score;
 
                 if (bonus > 0 && spaceships[i].lives > 0) {
-                    Progression::addScore(
-                        playerScore,
-                        bonus
-                    );
+                    Progression::addScore(playerScore, bonus);
                 }
 
-                progression.update(
-                    spaceships[i],
-                    playerScore
-                );
+                progression.update(spaceships[i], playerScore);
             }
 
-            updateAlienShooting(
-                aliens,
-                spaceships,
-                firstPlayer,
-                endPlayer,
-                sound
-            );
+            updateAlienShooting(aliens, spaceships, firstPlayer, endPlayer,
+                                sound);
 
-            updateThrustSound(
-                spaceships,
-                firstPlayer,
-                endPlayer,
-                sound
-            );
+            updateThrustSound(spaceships, firstPlayer, endPlayer, sound);
 
             if (!waves.resting() &&
                 soundSpeedTimer.getElapsedTime().asSeconds() >=
                     GameRules::BeatAccelerationInterval) {
-                beatInterval = std::max(
-                    GameRules::MinimumBeatInterval,
-                    beatInterval *
-                        GameRules::BeatAccelerationFactor
-                );
+                beatInterval =
+                    std::max(GameRules::MinimumBeatInterval,
+                             beatInterval * GameRules::BeatAccelerationFactor);
 
                 soundSpeedTimer.restart();
             }
 
             if (!waves.resting() &&
-                beat.getElapsedTime().asSeconds() >=
-                    beatInterval) {
+                beat.getElapsedTime().asSeconds() >= beatInterval) {
                 playBeat(sBeat1, sBeat2, sound);
                 beat.restart();
             }
 
             const bool gameOver =
-                coop
-                    ? spaceships[1].lives <= 0 &&
-                      spaceships[2].lives <= 0
-                    : spaceships[0].lives <= 0;
+                coop ? spaceships[1].lives <= 0 && spaceships[2].lives <= 0
+                     : spaceships[0].lives <= 0;
 
             if (gameOver) {
                 state = GameState::GAME_OVER;
@@ -383,18 +283,8 @@ std::pair<int, int> runGame(
             }
         }
 
-        renderer.draw(
-            window,
-            asteroids,
-            aliens,
-            spaceships,
-            coop,
-            score,
-            score2,
-            paused,
-            waves,
-            progression
-        );
+        renderer.draw(window, asteroids, aliens, spaceships, coop, score,
+                      score2, paused, waves, progression);
     }
 
     return result();

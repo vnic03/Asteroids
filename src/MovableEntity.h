@@ -1,12 +1,12 @@
 #ifndef ASTEROIDS_MOVABLEENTITY_H
 #define ASTEROIDS_MOVABLEENTITY_H
 
+#include "GameConstants.h"
+#include "logic/GameRules.h"
 #include <SFML/Graphics.hpp>
-#include <vector>
 #include <cmath>
 #include <optional>
-#include "logic/GameRules.h"
-#include "GameConstants.h"
+#include <vector>
 
 struct Projectile {
     sf::Vector2f position;
@@ -17,34 +17,24 @@ struct Projectile {
 
     SimulationClock lifetime;
 
-    Projectile(
-            sf::Vector2f pos,
-            sf::Vector2f dir,
-            sf::Color color,
-            float spd = GameRules::PlayerProjectileSpeed,
-            float rad = GameRules::PlayerProjectileRadius
-        )
-            :
-                position(pos),
-                direction(dir),
-                speed(spd),
-                radius(rad),
-                color(color)
-    {
+    Projectile(sf::Vector2f pos, sf::Vector2f dir, sf::Color color,
+               float spd = GameRules::PlayerProjectileSpeed,
+               float rad = GameRules::PlayerProjectileRadius)
+        : position(pos), direction(dir), speed(spd), radius(rad), color(color) {
         float length = std::sqrt(dir.x * dir.x + dir.y * dir.y);
         direction = length > 0.0001f ? dir / length : sf::Vector2f(0.f, -1.f);
     }
 };
 
 class MovableEntity {
-public:
+  public:
     sf::ConvexShape shape;
     sf::Vector2f velocity;
     std::vector<Projectile> projectiles;
     bool explosion = false;
     int lives = 0;
 
-    MovableEntity() : velocity(sf::Vector2f(0.f, 0.f)) { }
+    MovableEntity() : velocity(sf::Vector2f(0.f, 0.f)) {}
 
     virtual ~MovableEntity() = default;
 
@@ -52,14 +42,13 @@ public:
 
     virtual void update(float delta, bool sound) = 0;
 
-    virtual void shoot(bool sound, std::optional<sf::Vector2f> targetPos = std::nullopt) = 0;
+    virtual void
+    shoot(bool sound, std::optional<sf::Vector2f> targetPos = std::nullopt) = 0;
 
     virtual void explode(bool sound) = 0;
 
-protected:
-    sf::CircleShape projectileShape{
-        GameRules::PlayerProjectileRadius
-    };
+  protected:
+    sf::CircleShape projectileShape{GameRules::PlayerProjectileRadius};
 
     void drawProjectiles(sf::RenderWindow& window) {
         for (const auto& projectile : projectiles) {
@@ -69,8 +58,7 @@ protected:
 
             projectileShape.setPosition(
                 projectile.position -
-                sf::Vector2f(projectile.radius, projectile.radius)
-            );
+                sf::Vector2f(projectile.radius, projectile.radius));
 
             projectileShape.setFillColor(projectile.color);
             window.draw(projectileShape);
@@ -80,16 +68,19 @@ protected:
     virtual void initShape() = 0;
 
     // keeps all entities in the screen
-    template<typename T>
-    inline void wrapAroundScreen(T& t, sf::Vector2f pos) {
-        if (pos.x < 0) pos.x += SIZE_X;
-        else if (pos.x > SIZE_X) pos.x = 0;
+    template <typename T> inline void wrapAroundScreen(T& t, sf::Vector2f pos) {
+        if (pos.x < 0)
+            pos.x += SIZE_X;
+        else if (pos.x > SIZE_X)
+            pos.x = 0;
 
-        if (pos.y < 0) pos.y += SIZE_Y;
-        else if (pos.y > SIZE_Y) pos.y = 0;
+        if (pos.y < 0)
+            pos.y += SIZE_Y;
+        else if (pos.y > SIZE_Y)
+            pos.y = 0;
 
         t.setPosition(pos);
     }
 };
 
-#endif //ASTEROIDS_MOVABLEENTITY_H
+#endif // ASTEROIDS_MOVABLEENTITY_H

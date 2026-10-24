@@ -1,11 +1,10 @@
 #ifndef ASTEROIDS_SPACESHIP_H
 #define ASTEROIDS_SPACESHIP_H
 
+#include "../MovableEntity.h"
 #include <SFML/Graphics.hpp>
 #include <cmath>
 #include <cstdlib>
-#include "../MovableEntity.h"
-
 
 struct ExplosionFragment {
     sf::Vector2f position;
@@ -13,12 +12,13 @@ struct ExplosionFragment {
     float speed;
     sf::Color color;
 
-    ExplosionFragment(sf::Vector2f pos, sf::Vector2f dir, float speed, sf::Color color)
-            : position(pos), direction(dir), speed(speed), color(color) { }
+    ExplosionFragment(sf::Vector2f pos, sf::Vector2f dir, float speed,
+                      sf::Color color)
+        : position(pos), direction(dir), speed(speed), color(color) {}
 };
 
 class SpaceShip : public MovableEntity {
-public:
+  public:
     explicit SpaceShip(int id = 0);
 
     // id to differ between single and coop mode
@@ -39,11 +39,12 @@ public:
 
     bool invincible = false;
 
-    void draw(sf::RenderWindow &window) override;
+    void draw(sf::RenderWindow& window) override;
 
     void update(float delta, bool sound) override;
 
-    void shoot(bool sound, std::optional<sf::Vector2f> pos = std::nullopt) override;
+    void shoot(bool sound,
+               std::optional<sf::Vector2f> pos = std::nullopt) override;
 
     void explode(bool sound) override;
 
@@ -55,11 +56,12 @@ public:
 
     // Single-Player: White
     // COOP: Player 1 gets Red and Player 2 gets Cyan
-     sf::Color handleColor() const {
-        return (id == 1) ? PLAYER_1_COLOR : ((id == 2) ? PLAYER_2_COLOR : WHITE);
-     }
+    sf::Color handleColor() const {
+        return (id == 1) ? PLAYER_1_COLOR
+                         : ((id == 2) ? PLAYER_2_COLOR : WHITE);
+    }
 
-private:
+  private:
     void initShape() override;
 
     void initEngineShape();
@@ -70,4 +72,4 @@ private:
     void respawn();
 };
 
-#endif //ASTEROIDS_SPACESHIP_H
+#endif // ASTEROIDS_SPACESHIP_H

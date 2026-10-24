@@ -1,12 +1,11 @@
 #ifndef ASTEROIDS_GAMECONSTANTS_H
 #define ASTEROIDS_GAMECONSTANTS_H
 
+#include "SimulationClock.h"
+#include <SFML/Audio.hpp>
+#include <SFML/Audio/SoundBuffer.hpp>
 #include <SFML/Graphics.hpp>
 #include <vector>
-#include <SFML/Audio/SoundBuffer.hpp>
-#include <SFML/Audio.hpp>
-#include "SimulationClock.h"
-
 
 enum class GameState {
     START_SCREEN,
@@ -46,7 +45,6 @@ const sf::Keyboard::Key COOP_LEFT = sf::Keyboard::Key::Left;
 const sf::Keyboard::Key COOP_RIGHT = sf::Keyboard::Key::Right;
 const sf::Keyboard::Key COOP_SHOOT = sf::Keyboard::Key::RControl;
 
-
 // COLORS
 inline const sf::Color& white() {
     static const sf::Color white = sf::Color::White;
@@ -69,58 +67,107 @@ const sf::Color PLAYER_2_COLOR = player2Color();
 const float NUMBER_SCALE = 30.f;
 
 const std::vector<std::vector<sf::Vector2f>> NUMBER_LINES = {
-        { // 0
-            {0.2, 0}, {0.8, 0}, {0.8, 0}, {0.8, 0.8}, {0.8, 0.8}, {0.2, 0.8},
-            {0.2, 0.8}, {0.2, 0},
-        },
+    {
+        // 0
+        {0.2, 0},
+        {0.8, 0},
+        {0.8, 0},
+        {0.8, 0.8},
+        {0.8, 0.8},
+        {0.2, 0.8},
+        {0.2, 0.8},
+        {0.2, 0},
+    },
 
-        // 1
-        { {0.5, 0}, {0.5, 0.8} },
+    // 1
+    {{0.5, 0}, {0.5, 0.8}},
 
-        // 2
-        { {0.1, 0}, {0.9, 0}, {0.9, 0}, {0.9, 0.4}, {0.9, 0.4}, {0.1, 0.4},
-         {0.1, 0.4}, {0.1, 0.8}, {0.1, 0.8}, {0.9, 0.8} },
+    // 2
+    {{0.1, 0},
+     {0.9, 0},
+     {0.9, 0},
+     {0.9, 0.4},
+     {0.9, 0.4},
+     {0.1, 0.4},
+     {0.1, 0.4},
+     {0.1, 0.8},
+     {0.1, 0.8},
+     {0.9, 0.8}},
 
-        { // 3
-            {0.1, 0}, {0.9, 0}, {0.9, 0}, {0.9, 0.8}, {0.9, 0.8}, {0.1, 0.8},
-            {0.1, 0.4}, {0.9, 0.4}
-        },
+    {// 3
+     {0.1, 0},
+     {0.9, 0},
+     {0.9, 0},
+     {0.9, 0.8},
+     {0.9, 0.8},
+     {0.1, 0.8},
+     {0.1, 0.4},
+     {0.9, 0.4}},
 
-        // 4
-        { {0.1, 0}, {0.1, 0.4}, {0.1, 0.4}, {0.9, 0.4}, {0.5, 0}, {0.5, 0.8} },
+    // 4
+    {{0.1, 0}, {0.1, 0.4}, {0.1, 0.4}, {0.9, 0.4}, {0.5, 0}, {0.5, 0.8}},
 
-        { // 5
-            {0.9, 0}, {0.1, 0}, {0.1, 0}, {0.1, 0.4}, {0.1, 0.4}, {0.9, 0.4},
-            {0.9, 0.4}, {0.9, 0.8}, {0.9, 0.8}, {0.1, 0.8}
-        },
+    {// 5
+     {0.9, 0},
+     {0.1, 0},
+     {0.1, 0},
+     {0.1, 0.4},
+     {0.1, 0.4},
+     {0.9, 0.4},
+     {0.9, 0.4},
+     {0.9, 0.8},
+     {0.9, 0.8},
+     {0.1, 0.8}},
 
-        // 6
-        {
-            {0.9, 0}, {0.1, 0}, {0.1, 0}, {0.1, 0.8}, {0.1, 0.8}, {0.9, 0.8},
-            {0.9, 0.8}, {0.9, 0.4}, {0.9, 0.4}, {0.1, 0.4}
-        },
+    // 6
+    {{0.9, 0},
+     {0.1, 0},
+     {0.1, 0},
+     {0.1, 0.8},
+     {0.1, 0.8},
+     {0.9, 0.8},
+     {0.9, 0.8},
+     {0.9, 0.4},
+     {0.9, 0.4},
+     {0.1, 0.4}},
 
-        // 7
-        { {0.1, 0}, {0.9, 0}, {0.9, 0}, {0.9, 0.8} },
+    // 7
+    {{0.1, 0}, {0.9, 0}, {0.9, 0}, {0.9, 0.8}},
 
-        { // 8
-            {0.1, 0}, {0.9, 0}, {0.9, 0}, {0.9, 0.8}, {0.9, 0.8}, {0.1, 0.8},
-            {0.1, 0.8}, {0.1, 0}, {0.5, 0.4}, {0.9, 0.4}, {0.1, 0.4}, {0.5, 0.4}
-        },
+    {// 8
+     {0.1, 0},
+     {0.9, 0},
+     {0.9, 0},
+     {0.9, 0.8},
+     {0.9, 0.8},
+     {0.1, 0.8},
+     {0.1, 0.8},
+     {0.1, 0},
+     {0.5, 0.4},
+     {0.9, 0.4},
+     {0.1, 0.4},
+     {0.5, 0.4}},
 
-        { // 9
-            {0.1, 0}, {0.9, 0}, {0.9, 0}, {0.9, 0.8}, {0.9, 0.8}, {0.5, 0.8},
-            {0.1, 0}, {0.1, 0.4}, {0.1, 0.4}, {0.9, 0.4}
-        }
-};
+    {// 9
+     {0.1, 0},
+     {0.9, 0},
+     {0.9, 0},
+     {0.9, 0.8},
+     {0.9, 0.8},
+     {0.5, 0.8},
+     {0.1, 0},
+     {0.1, 0.4},
+     {0.1, 0.4},
+     {0.9, 0.4}}};
 
 // Game-Sounds
 extern sf::SoundBuffer bBeat1, bBeat2, bSmallEx, bMediumEx, bBigEx, bFire,
-bThrust, bEx, bAlienB, bAlienS, bGameOver;
-extern sf::Sound sBeat1, sBeat2, sSmallEx, sMediumEx, sBigEx, sFire,
-sThrust, sEx, sAlienB, sAlienS, sGameOver;
+    bThrust, bEx, bAlienB, bAlienS, bGameOver;
+extern sf::Sound sBeat1, sBeat2, sSmallEx, sMediumEx, sBigEx, sFire, sThrust,
+    sEx, sAlienB, sAlienS, sGameOver;
 
-bool loadSound(sf::SoundBuffer& buffer, sf::Sound& sound, const std::string& file);
+bool loadSound(sf::SoundBuffer& buffer, sf::Sound& sound,
+               const std::string& file);
 
 // Alternates between playing two beat sounds to create a rhythmic background
 void playBeat(sf::Sound& beat1, sf::Sound& beat2, bool sound);
@@ -134,5 +181,4 @@ void playSound(sf::Sound& sound);
 
 void stopGameSounds();
 
-
-#endif //ASTEROIDS_GAMECONSTANTS_H
+#endif // ASTEROIDS_GAMECONSTANTS_H

@@ -14,50 +14,44 @@ void addScore(int& score, int amount) {
     }
 }
 
-void awardAsteroidScore(
-    AsteroidSize size,
-    int& score,
-    bool sound
-) {
+void awardAsteroidScore(AsteroidSize size, int& score, bool sound) {
     switch (size) {
-        case AsteroidSize::BIG:
-            addScore(score, 20);
-            if (sound) playSound(sBigEx);
-            break;
+    case AsteroidSize::BIG:
+        addScore(score, 20);
+        if (sound)
+            playSound(sBigEx);
+        break;
 
-        case AsteroidSize::MEDIUM:
-            addScore(score, 50);
-            if (sound) playSound(sMediumEx);
-            break;
+    case AsteroidSize::MEDIUM:
+        addScore(score, 50);
+        if (sound)
+            playSound(sMediumEx);
+        break;
 
-        case AsteroidSize::SMALL:
-            addScore(score, 100);
-            if (sound) playSound(sSmallEx);
-            break;
+    case AsteroidSize::SMALL:
+        addScore(score, 100);
+        if (sound)
+            playSound(sSmallEx);
+        break;
     }
 }
 
-void spawnAsteroidFragments(
-    std::vector<std::unique_ptr<Asteroid>>& asteroids,
-    AsteroidSize destroyedSize,
-    sf::Vector2f position,
-    int level
-) {
+void spawnAsteroidFragments(std::vector<std::unique_ptr<Asteroid>>& asteroids,
+                            AsteroidSize destroyedSize, sf::Vector2f position,
+                            int level) {
     if (destroyedSize == AsteroidSize::SMALL) {
         return;
     }
 
-    const AsteroidSize fragmentSize =
-        destroyedSize == AsteroidSize::BIG
-            ? AsteroidSize::MEDIUM
-            : AsteroidSize::SMALL;
+    const AsteroidSize fragmentSize = destroyedSize == AsteroidSize::BIG
+                                          ? AsteroidSize::MEDIUM
+                                          : AsteroidSize::SMALL;
 
     for (int i = 0; i < 2; ++i) {
         auto fragment = std::make_unique<Asteroid>(fragmentSize);
         fragment->initShape(level);
         fragment->shape.setPosition(
-            position + sf::Vector2f(static_cast<float>(i * 10), 0.f)
-        );
+            position + sf::Vector2f(static_cast<float>(i * 10), 0.f));
 
         asteroids.push_back(std::move(fragment));
     }
@@ -65,12 +59,8 @@ void spawnAsteroidFragments(
 
 } // namespace
 
-bool checkCollision(
-    const sf::Vector2f& position1,
-    float radius1,
-    const sf::Vector2f& position2,
-    float radius2
-) {
+bool checkCollision(const sf::Vector2f& position1, float radius1,
+                    const sf::Vector2f& position2, float radius2) {
     const float dx = position1.x - position2.x;
     const float dy = position1.y - position2.y;
     const float radiusSum = radius1 + radius2;
@@ -78,39 +68,23 @@ bool checkCollision(
     return dx * dx + dy * dy < radiusSum * radiusSum;
 }
 
-bool checkCollision(
-    const sf::Shape& object1,
-    float radius1,
-    const sf::Shape& object2,
-    float radius2
-) {
-    return checkCollision(
-        object1.getPosition(),
-        radius1,
-        object2.getPosition(),
-        radius2
-    );
+bool checkCollision(const sf::Shape& object1, float radius1,
+                    const sf::Shape& object2, float radius2) {
+    return checkCollision(object1.getPosition(), radius1, object2.getPosition(),
+                          radius2);
 }
 
 void resolveAsteroidCollisions(
-    std::vector<std::unique_ptr<Asteroid>>& asteroids,
-    SpaceShip& spaceship,
-    int& score,
-    int /*level*/,
-    bool sound
-) {
+    std::vector<std::unique_ptr<Asteroid>>& asteroids, SpaceShip& spaceship,
+    int& score, int /*level*/, bool sound) {
     if (spaceship.explosion || spaceship.lives <= 0) {
         return;
     }
 
     if (!spaceship.invincible) {
         for (const auto& asteroid : asteroids) {
-            if (checkCollision(
-                    spaceship.shape,
-                    spaceship.radius,
-                    asteroid->shape,
-                    asteroid->collisionRadius
-                )) {
+            if (checkCollision(spaceship.shape, spaceship.radius,
+                               asteroid->shape, asteroid->collisionRadius)) {
                 spaceship.explode(sound);
 
                 return;
@@ -127,25 +101,16 @@ void resolveAsteroidCollisions(
         const sf::Vector2f projectileEnd =
             projectile->position + projectile->direction * 10.f;
 
-        for (auto asteroid = asteroids.begin();
-             asteroid != asteroids.end();
+        for (auto asteroid = asteroids.begin(); asteroid != asteroids.end();
              ++asteroid) {
             const auto position = (*asteroid)->shape.getPosition();
             const float radius = (*asteroid)->collisionRadius;
 
             const bool overlaps =
-                checkCollision(
-                    projectile->position,
-                    projectile->radius,
-                    position,
-                    radius
-                ) ||
-                checkCollision(
-                    projectileEnd,
-                    projectile->radius,
-                    position,
-                    radius
-                );
+                checkCollision(projectile->position, projectile->radius,
+                               position, radius) ||
+                checkCollision(projectileEnd, projectile->radius, position,
+                               radius);
 
             if (!overlaps) {
                 continue;
@@ -163,12 +128,8 @@ void resolveAsteroidCollisions(
                 asteroids.erase(asteroid);
 
                 // No asteroid iterator is used after this mutation.
-                spawnAsteroidFragments(
-                    asteroids,
-                    size,
-                    position,
-                    fragmentLevel
-                );
+                spawnAsteroidFragments(asteroids, size, position,
+                                       fragmentLevel);
             }
 
             break;
@@ -182,12 +143,8 @@ void resolveAsteroidCollisions(
     }
 }
 
-void resolveAlienCollisions(
-    std::vector<std::unique_ptr<Alien>>& aliens,
-    SpaceShip& spaceship,
-    int& score,
-    bool sound
-) {
+void resolveAlienCollisions(std::vector<std::unique_ptr<Alien>>& aliens,
+                            SpaceShip& spaceship, int& score, bool sound) {
     if (spaceship.explosion || spaceship.lives <= 0) {
         return;
     }
@@ -200,12 +157,8 @@ void resolveAlienCollisions(
         const float alienRadius = alien->collisionRadius;
 
         if (!spaceship.invincible &&
-            checkCollision(
-                spaceship.shape,
-                spaceship.radius,
-                alien->shape,
-                alienRadius
-            )) {
+            checkCollision(spaceship.shape, spaceship.radius, alien->shape,
+                           alienRadius)) {
             spaceship.explode(sound);
             alien->explode(sound);
             return;
@@ -215,12 +168,8 @@ void resolveAlienCollisions(
 
         for (auto shot = playerShots.begin();
              shot != playerShots.end() && !alien->isDestroyed();) {
-            if (!checkCollision(
-                    shot->position,
-                    shot->radius,
-                    alien->shape.getPosition(),
-                    alienRadius
-                )) {
+            if (!checkCollision(shot->position, shot->radius,
+                                alien->shape.getPosition(), alienRadius)) {
                 ++shot;
                 continue;
             }
@@ -229,12 +178,9 @@ void resolveAlienCollisions(
             alien->takeDamage(sound);
 
             if (alien->isDestroyed()) {
-                addScore(
-                    score,
-                    alien->alienSize == AlienSize::BIG
-                        ? GameRules::BigAlienScore
-                        : GameRules::SmallAlienScore
-                );
+                addScore(score, alien->alienSize == AlienSize::BIG
+                                    ? GameRules::BigAlienScore
+                                    : GameRules::SmallAlienScore);
             }
         }
 
@@ -244,14 +190,10 @@ void resolveAlienCollisions(
 
         auto& enemyShots = alien->projectiles;
 
-        for (auto shot = enemyShots.begin();
-             shot != enemyShots.end();) {
-            if (!checkCollision(
-                    shot->position,
-                    shot->radius,
-                    spaceship.shape.getPosition(),
-                    spaceship.radius
-                )) {
+        for (auto shot = enemyShots.begin(); shot != enemyShots.end();) {
+            if (!checkCollision(shot->position, shot->radius,
+                                spaceship.shape.getPosition(),
+                                spaceship.radius)) {
                 ++shot;
                 continue;
             }

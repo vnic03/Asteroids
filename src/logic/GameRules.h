@@ -4,7 +4,6 @@
 #include <cmath>
 #include <cstdlib>
 
-
 namespace GameRules {
 
 inline constexpr float Pi = 3.14159265358979323846f;
@@ -57,38 +56,44 @@ inline constexpr float MinimumBeatInterval = 0.35f;
 inline constexpr float BeatAccelerationInterval = 5.f;
 inline constexpr float BeatAccelerationFactor = 0.9f;
 
-enum class WaveType {
-    INTRO,
-    MIXED,
-    FIELD,
-    HUNT,
-    DEBRIS,
-    RECOVERY,
-    ASSAULT
-};
+enum class WaveType { INTRO, MIXED, FIELD, HUNT, DEBRIS, RECOVERY, ASSAULT };
 
 inline WaveType waveType(int wave) {
-    if (wave == 1) return WaveType::INTRO;
-    if (wave <= 5) return WaveType::MIXED;
+    if (wave == 1)
+        return WaveType::INTRO;
+    if (wave <= 5)
+        return WaveType::MIXED;
 
     switch (wave % 5) {
-        case 0: return WaveType::ASSAULT;
-        case 1: return WaveType::RECOVERY;
-        case 2: return WaveType::FIELD;
-        case 3: return WaveType::DEBRIS;
-        default: return WaveType::HUNT;
+    case 0:
+        return WaveType::ASSAULT;
+    case 1:
+        return WaveType::RECOVERY;
+    case 2:
+        return WaveType::FIELD;
+    case 3:
+        return WaveType::DEBRIS;
+    default:
+        return WaveType::HUNT;
     }
 }
 
 inline const char* waveName(int wave) {
     switch (waveType(wave)) {
-        case WaveType::INTRO: return "FIRST CONTACT";
-        case WaveType::FIELD: return "ASTEROID FIELD";
-        case WaveType::HUNT: return "ALIEN HUNT";
-        case WaveType::DEBRIS: return "FAST DEBRIS";
-        case WaveType::RECOVERY: return "BREATHER";
-        case WaveType::ASSAULT: return "ALIEN ASSAULT";
-        default: return "MIXED ATTACK";
+    case WaveType::INTRO:
+        return "FIRST CONTACT";
+    case WaveType::FIELD:
+        return "ASTEROID FIELD";
+    case WaveType::HUNT:
+        return "ALIEN HUNT";
+    case WaveType::DEBRIS:
+        return "FAST DEBRIS";
+    case WaveType::RECOVERY:
+        return "BREATHER";
+    case WaveType::ASSAULT:
+        return "ALIEN ASSAULT";
+    default:
+        return "MIXED ATTACK";
     }
 }
 
@@ -101,11 +106,16 @@ inline int asteroidCount(int wave) {
     const int growth = std::min(3, (wave - 6) / 5);
 
     switch (waveType(wave)) {
-        case WaveType::RECOVERY: return 5;
-        case WaveType::FIELD: return 8 + growth;
-        case WaveType::DEBRIS: return 7 + growth;
-        case WaveType::HUNT: return 5 + growth;
-        default: return 6 + growth;
+    case WaveType::RECOVERY:
+        return 5;
+    case WaveType::FIELD:
+        return 8 + growth;
+    case WaveType::DEBRIS:
+        return 7 + growth;
+    case WaveType::HUNT:
+        return 5 + growth;
+    default:
+        return 6 + growth;
     }
 }
 
@@ -127,9 +137,8 @@ inline float asteroidSpeed(int size, int wave) {
 inline float alienShootInterval(bool big, int wave) {
     const int progress = std::clamp(wave - 1, 0, 20);
 
-    return big
-        ? std::max(2.5f, 3.f - progress * 0.025f)
-        : std::max(1.4f, 2.2f - progress * 0.04f);
+    return big ? std::max(2.5f, 3.f - progress * 0.025f)
+               : std::max(1.4f, 2.2f - progress * 0.04f);
 }
 
 inline int clearBonus(float remaining) {

@@ -7,60 +7,38 @@
 namespace {
 
 sf::Vector2f normalized(sf::Vector2f vector) {
-    const float length = std::sqrt(
-        vector.x * vector.x + vector.y * vector.y
-    );
+    const float length = std::sqrt(vector.x * vector.x + vector.y * vector.y);
 
-    return length > 0.0001f
-        ? vector / length
-        : sf::Vector2f(0.f, 1.f);
+    return length > 0.0001f ? vector / length : sf::Vector2f(0.f, 1.f);
 }
 
 sf::Vector2f rotated(sf::Vector2f vector, float degrees) {
     const float angle = degrees * GameRules::Pi / 180.f;
 
-    return {
-        vector.x * std::cos(angle) - vector.y * std::sin(angle),
-        vector.x * std::sin(angle) + vector.y * std::cos(angle)
-    };
+    return {vector.x * std::cos(angle) - vector.y * std::sin(angle),
+            vector.x * std::sin(angle) + vector.y * std::cos(angle)};
 }
 
 } // namespace
 
-Alien::Alien(
-    AlienSize size,
-    int level,
-    std::optional<sf::Vector2f> position
-)
+Alien::Alien(AlienSize size, int level, std::optional<sf::Vector2f> position)
     : alienSize(size) {
     const bool big = size == AlienSize::BIG;
 
-    lives = big
-        ? GameRules::BigAlienLives
-        : GameRules::SmallAlienLives;
+    lives = big ? GameRules::BigAlienLives : GameRules::SmallAlienLives;
 
-    shootInterval =
-        GameRules::alienShootInterval(big, level);
+    shootInterval = GameRules::alienShootInterval(big, level);
 
-    shape.setPosition(
-        position.value_or(sf::Vector2f(48.f, 48.f))
-    );
+    shape.setPosition(position.value_or(sf::Vector2f(48.f, 48.f)));
 
-    const sf::Vector2f center(
-        SIZE_X / 2.f,
-        SIZE_Y / 2.f
-    );
+    const sf::Vector2f center(SIZE_X / 2.f, SIZE_Y / 2.f);
 
-    velocity =
-        normalized(center - shape.getPosition()) *
-        (big
-            ? GameRules::BigAlienSpeed
-            : GameRules::SmallAlienSpeed);
+    velocity = normalized(center - shape.getPosition()) *
+               (big ? GameRules::BigAlienSpeed : GameRules::SmallAlienSpeed);
 
     initShape();
 
-    collisionRadius =
-        shape.getGlobalBounds().width / 2.f;
+    collisionRadius = shape.getGlobalBounds().width / 2.f;
 
     updateVisualPositions();
 }
@@ -78,54 +56,43 @@ void Alien::draw(sf::RenderWindow& window) {
 }
 
 void Alien::update(float delta, bool) {
-    if (isDestroyed()) return;
+    if (isDestroyed())
+        return;
 
     if (alienSize == AlienSize::SMALL) {
         directionElapsed += delta;
 
-        if (directionElapsed >=
-            GameRules::SmallAlienDirectionInterval) {
-            directionElapsed -=
-                GameRules::SmallAlienDirectionInterval;
+        if (directionElapsed >= GameRules::SmallAlienDirectionInterval) {
+            directionElapsed -= GameRules::SmallAlienDirectionInterval;
 
-            const float angle =
-                (std::rand() % 360) * GameRules::Pi / 180.f;
+            const float angle = (std::rand() % 360) * GameRules::Pi / 180.f;
 
-            velocity = {
-                std::cos(angle) * GameRules::SmallAlienSpeed,
-                std::sin(angle) * GameRules::SmallAlienSpeed
-            };
+            velocity = {std::cos(angle) * GameRules::SmallAlienSpeed,
+                        std::sin(angle) * GameRules::SmallAlienSpeed};
         }
     }
 
-    wrapAroundScreen(
-        shape,
-        shape.getPosition() + velocity * delta
-    );
+    wrapAroundScreen(shape, shape.getPosition() + velocity * delta);
 
     updateVisualPositions();
 
     for (auto& projectile : projectiles) {
-        projectile.position +=
-            projectile.direction * projectile.speed * delta;
+        projectile.position += projectile.direction * projectile.speed * delta;
     }
 
     std::erase_if(projectiles, [](const Projectile& projectile) {
-        return
-            projectile.lifetime.getElapsedTime().asSeconds() >
-                GameRules::AlienProjectileLifetime ||
-            projectile.position.x < -projectile.radius ||
-            projectile.position.x > SIZE_X + projectile.radius ||
-            projectile.position.y < -projectile.radius ||
-            projectile.position.y > SIZE_Y + projectile.radius;
+        return projectile.lifetime.getElapsedTime().asSeconds() >
+                   GameRules::AlienProjectileLifetime ||
+               projectile.position.x < -projectile.radius ||
+               projectile.position.x > SIZE_X + projectile.radius ||
+               projectile.position.y < -projectile.radius ||
+               projectile.position.y > SIZE_Y + projectile.radius;
     });
 }
 
-void Alien::shoot(
-    bool sound,
-    std::optional<sf::Vector2f> target
-) {
-    if (isDestroyed()) return;
+void Alien::shoot(bool sound, std::optional<sf::Vector2f> target) {
+    if (isDestroyed())
+        return;
 
     if (!target) {
         charging = false;
@@ -133,8 +100,7 @@ void Alien::shoot(
         return;
     }
 
-    if (age.getElapsedTime().asSeconds() <
-        GameRules::AlienSpawnGrace) {
+    if (age.getElapsedTime().asSeconds() < GameRules::AlienSpawnGrace) {
         return;
     }
 
@@ -144,14 +110,10 @@ void Alien::shoot(
             return;
         }
 
-        aimDirection =
-            normalized(*target - shape.getPosition());
+        aimDirection = normalized(*target - shape.getPosition());
 
         if (alienSize == AlienSize::BIG) {
-            aimDirection = rotated(
-                aimDirection,
-                (volley % 3 - 1) * 15.f
-            );
+            aimDirection = rotated(aimDirection, (volley % 3 - 1) * 15.f);
         }
 
         charging = true;
@@ -170,29 +132,24 @@ void Alien::shoot(
     for (int i = 0; i < count; ++i) {
         projectiles.emplace_back(
             shape.getPosition(),
-            rotated(
-                aimDirection,
-                big ? (i - 1) * 25.f : 0.f
-            ),
-            WHITE,
-            big
-                ? GameRules::BigAlienProjectileSpeed
+            rotated(aimDirection, big ? (i - 1) * 25.f : 0.f), WHITE,
+            big ? GameRules::BigAlienProjectileSpeed
                 : GameRules::SmallAlienProjectileSpeed,
-            big
-                ? GameRules::BigAlienProjectileRadius
-                : GameRules::SmallAlienProjectileRadius
-        );
+            big ? GameRules::BigAlienProjectileRadius
+                : GameRules::SmallAlienProjectileRadius);
     }
 
     ++volley;
     charging = false;
     shootTimer.restart();
 
-    if (sound) playSound(sFire);
+    if (sound)
+        playSound(sFire);
 }
 
 void Alien::explode(bool sound) {
-    if (explosion) return;
+    if (explosion)
+        return;
 
     explosion = true;
     lives = 0;
@@ -206,13 +163,10 @@ void Alien::explode(bool sound) {
 void Alien::updateVisualPositions() {
     line.setPosition(shape.getPosition());
 
-    const float cockpitOffsetY =
-        -r_y - cockpitHeight / 2.f + 1.9f;
+    const float cockpitOffsetY = -r_y - cockpitHeight / 2.f + 1.9f;
 
-    cockpit.setPosition(
-        shape.getPosition().x,
-        shape.getPosition().y + cockpitOffsetY
-    );
+    cockpit.setPosition(shape.getPosition().x,
+                        shape.getPosition().y + cockpitOffsetY);
 }
 
 void Alien::initShape() {
@@ -223,14 +177,11 @@ void Alien::initShape() {
 
     shape.setPointCount(pointCount);
 
-    const float angleStep =
-        2.f * GameRules::Pi / pointCount;
+    const float angleStep = 2.f * GameRules::Pi / pointCount;
 
     for (int i = 0; i < pointCount; ++i) {
-        shape.setPoint(i, {
-            std::cos(angleStep * i) * r,
-            std::sin(angleStep * i) * r_y
-        });
+        shape.setPoint(
+            i, {std::cos(angleStep * i) * r, std::sin(angleStep * i) * r_y});
     }
 
     shape.setOutlineColor(WHITE);

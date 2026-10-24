@@ -3,7 +3,7 @@
 #include <SFML/System/Time.hpp>
 
 class SimulationClock {
-public:
+  public:
     SimulationClock() : startedAt(now) {}
 
     sf::Time getElapsedTime() const {
@@ -22,7 +22,7 @@ public:
         }
     }
 
-private:
+  private:
     inline static double now = 0.0;
     double startedAt;
 };

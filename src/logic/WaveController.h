@@ -8,40 +8,27 @@
 #include "../alien/Alien.h"
 #include "../spaceship/Spaceship.h"
 
-
 class WaveController {
-public:
+  public:
     explicit WaveController(bool coop);
 
-    int currentLevel() const {
-        return level;
-    }
+    int currentLevel() const { return level; }
 
-    bool resting() const {
-        return inRest;
-    }
+    bool resting() const { return inRest; }
 
     float secondsRemaining() const;
 
-    int lastBonus() const {
-        return bonus;
-    }
+    int lastBonus() const { return bonus; }
 
-    void update(
-        float delta,
-        SpaceShip* players,
-        int first,
-        int end,
-        std::vector<std::unique_ptr<Asteroid>>& asteroids,
-        std::vector<std::unique_ptr<Alien>>& aliens,
-        bool sound
-    );
+    void update(float delta, SpaceShip* players, int first, int end,
+                std::vector<std::unique_ptr<Asteroid>>& asteroids,
+                std::vector<std::unique_ptr<Alien>>& aliens, bool sound);
 
     int finishFrame(bool worldEmpty);
 
     void drawWarnings(sf::RenderWindow& window) const;
 
-private:
+  private:
     enum class Kind {
         BIG_ROCK,
         MEDIUM_ROCK,
@@ -82,12 +69,8 @@ private:
 
     static int weight(Kind kind);
 
-    static bool safe(
-        sf::Vector2f position,
-        const SpaceShip* players,
-        int first,
-        int end
-    );
+    static bool safe(sf::Vector2f position, const SpaceShip* players, int first,
+                     int end);
 
     static sf::Vector2f edgePosition();
 };

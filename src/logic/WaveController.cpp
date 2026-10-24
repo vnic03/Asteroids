@@ -4,26 +4,23 @@
 #include <algorithm>
 #include <cmath>
 
-WaveController::WaveController(bool coop)
-    : coop(coop) {
-    buildSchedule();
-}
+WaveController::WaveController(bool coop) : coop(coop) { buildSchedule(); }
 
 float WaveController::secondsRemaining() const {
-    return std::max(
-        0.f,
-        inRest
-            ? restRemaining
-            : GameRules::WaveSeconds - elapsed
-    );
+    return std::max(0.f,
+                    inRest ? restRemaining : GameRules::WaveSeconds - elapsed);
 }
 
 int WaveController::weight(Kind kind) {
     switch (kind) {
-        case Kind::BIG_ROCK: return 4;
-        case Kind::MEDIUM_ROCK: return 2;
-        case Kind::SMALL_ROCK: return 1;
-        default: return 0;
+    case Kind::BIG_ROCK:
+        return 4;
+    case Kind::MEDIUM_ROCK:
+        return 2;
+    case Kind::SMALL_ROCK:
+        return 1;
+    default:
+        return 0;
     }
 }
 
@@ -35,9 +32,7 @@ void WaveController::buildSchedule() {
 
     auto rock = [&](int index) {
         if (level == 1) {
-            return index < 2
-                ? Kind::BIG_ROCK
-                : Kind::MEDIUM_ROCK;
+            return index < 2 ? Kind::BIG_ROCK : Kind::MEDIUM_ROCK;
         }
 
         if (type == GameRules::WaveType::DEBRIS) {
@@ -45,15 +40,11 @@ void WaveController::buildSchedule() {
         }
 
         if (type == GameRules::WaveType::FIELD) {
-            return index % 3 == 0
-                ? Kind::BIG_ROCK
-                : Kind::MEDIUM_ROCK;
+            return index % 3 == 0 ? Kind::BIG_ROCK : Kind::MEDIUM_ROCK;
         }
 
         if (level <= 3) {
-            return index % 2 == 0
-                ? Kind::BIG_ROCK
-                : Kind::MEDIUM_ROCK;
+            return index % 2 == 0 ? Kind::BIG_ROCK : Kind::MEDIUM_ROCK;
         }
 
         return static_cast<Kind>(index % 3);
@@ -62,22 +53,14 @@ void WaveController::buildSchedule() {
     const float span = level == 1 ? 6.f : 16.f;
 
     for (int i = 0; i < count; ++i) {
-        events.push_back({
-            span * i / std::max(1, count - 1),
-            rock(i),
-            false
-        });
+        events.push_back({span * i / std::max(1, count - 1), rock(i), false});
     }
 
     if (coop) {
         const int extra = (count + 1) / 2;
 
         for (int i = 0; i < extra; ++i) {
-            events.push_back({
-                span * (i + 0.5f) / extra,
-                rock(i),
-                true
-            });
+            events.push_back({span * (i + 0.5f) / extra, rock(i), true});
         }
     }
 
@@ -94,40 +77,36 @@ void WaveController::buildSchedule() {
         alien(18.f, Kind::SMALL_ALIEN);
     } else if (level > 5) {
         switch (type) {
-            case GameRules::WaveType::RECOVERY:
-                alien(14.f, Kind::BIG_ALIEN);
-                break;
+        case GameRules::WaveType::RECOVERY:
+            alien(14.f, Kind::BIG_ALIEN);
+            break;
 
-            case GameRules::WaveType::FIELD:
-                alien(16.f, Kind::BIG_ALIEN);
-                break;
+        case GameRules::WaveType::FIELD:
+            alien(16.f, Kind::BIG_ALIEN);
+            break;
 
-            case GameRules::WaveType::DEBRIS:
-                alien(16.f, Kind::SMALL_ALIEN);
-                break;
+        case GameRules::WaveType::DEBRIS:
+            alien(16.f, Kind::SMALL_ALIEN);
+            break;
 
-            case GameRules::WaveType::HUNT:
-                alien(6.f, Kind::BIG_ALIEN);
-                alien(14.f, Kind::SMALL_ALIEN);
-                alien(22.f, Kind::SMALL_ALIEN);
-                break;
+        case GameRules::WaveType::HUNT:
+            alien(6.f, Kind::BIG_ALIEN);
+            alien(14.f, Kind::SMALL_ALIEN);
+            alien(22.f, Kind::SMALL_ALIEN);
+            break;
 
-            default:
-                alien(4.f, Kind::BIG_ALIEN);
-                alien(10.f, Kind::SMALL_ALIEN);
-                alien(17.f, Kind::BIG_ALIEN);
-                alien(23.f, Kind::SMALL_ALIEN);
-                break;
+        default:
+            alien(4.f, Kind::BIG_ALIEN);
+            alien(10.f, Kind::SMALL_ALIEN);
+            alien(17.f, Kind::BIG_ALIEN);
+            alien(23.f, Kind::SMALL_ALIEN);
+            break;
         }
     }
 
     std::stable_sort(
-        events.begin(),
-        events.end(),
-        [](const Event& a, const Event& b) {
-            return a.at < b.at;
-        }
-    );
+        events.begin(), events.end(),
+        [](const Event& a, const Event& b) { return a.at < b.at; });
 }
 
 void WaveController::beginNextWave(float carry) {
@@ -149,28 +128,26 @@ void WaveController::beginNextWave(float carry) {
 sf::Vector2f WaveController::edgePosition() {
     constexpr int inset = 48;
 
-    const float x = static_cast<float>(
-        inset + std::rand() % (SIZE_X - 2 * inset)
-    );
+    const float x =
+        static_cast<float>(inset + std::rand() % (SIZE_X - 2 * inset));
 
-    const float y = static_cast<float>(
-        inset + std::rand() % (SIZE_Y - 2 * inset)
-    );
+    const float y =
+        static_cast<float>(inset + std::rand() % (SIZE_Y - 2 * inset));
 
     switch (std::rand() % 4) {
-        case 0: return {x, inset};
-        case 1: return {SIZE_X - inset, y};
-        case 2: return {x, SIZE_Y - inset};
-        default: return {inset, y};
+    case 0:
+        return {x, inset};
+    case 1:
+        return {SIZE_X - inset, y};
+    case 2:
+        return {x, SIZE_Y - inset};
+    default:
+        return {inset, y};
     }
 }
 
-bool WaveController::safe(
-    sf::Vector2f position,
-    const SpaceShip* players,
-    int first,
-    int end
-) {
+bool WaveController::safe(sf::Vector2f position, const SpaceShip* players,
+                          int first, int end) {
     for (int i = first; i < end; ++i) {
         if (players[i].lives <= 0 || players[i].explosion) {
             continue;
@@ -178,22 +155,17 @@ bool WaveController::safe(
 
         const auto ship = players[i].shape.getPosition();
 
-        float dx = std::fmod(
-            std::abs(position.x - ship.x),
-            static_cast<float>(SIZE_X)
-        );
+        float dx = std::fmod(std::abs(position.x - ship.x),
+                             static_cast<float>(SIZE_X));
 
-        float dy = std::fmod(
-            std::abs(position.y - ship.y),
-            static_cast<float>(SIZE_Y)
-        );
+        float dy = std::fmod(std::abs(position.y - ship.y),
+                             static_cast<float>(SIZE_Y));
 
         dx = std::min(dx, SIZE_X - dx);
         dy = std::min(dy, SIZE_Y - dy);
 
         if (dx * dx + dy * dy <
-            GameRules::SafeSpawnDistance *
-            GameRules::SafeSpawnDistance) {
+            GameRules::SafeSpawnDistance * GameRules::SafeSpawnDistance) {
             return false;
         }
     }
@@ -201,15 +173,10 @@ bool WaveController::safe(
     return true;
 }
 
-void WaveController::update(
-    float delta,
-    SpaceShip* players,
-    int first,
-    int end,
-    std::vector<std::unique_ptr<Asteroid>>& asteroids,
-    std::vector<std::unique_ptr<Alien>>& aliens,
-    bool sound
-) {
+void WaveController::update(float delta, SpaceShip* players, int first, int end,
+                            std::vector<std::unique_ptr<Asteroid>>& asteroids,
+                            std::vector<std::unique_ptr<Alien>>& aliens,
+                            bool sound) {
     if (inRest) {
         restRemaining -= delta;
 
@@ -235,14 +202,11 @@ void WaveController::update(
     const bool twoPlayers = coop && survivors > 1;
 
     const bool recovery =
-        GameRules::waveType(level) ==
-        GameRules::WaveType::RECOVERY;
+        GameRules::waveType(level) == GameRules::WaveType::RECOVERY;
 
-    const int rockCap =
-        (recovery ? 12 : 24) * (twoPlayers ? 3 : 2) / 2;
+    const int rockCap = (recovery ? 12 : 24) * (twoPlayers ? 3 : 2) / 2;
 
-    const int alienCap =
-        recovery ? 1 : (twoPlayers ? 3 : 2);
+    const int alienCap = recovery ? 1 : (twoPlayers ? 3 : 2);
 
     int rockLoad = 0;
 
@@ -258,9 +222,7 @@ void WaveController::update(
 
         const bool cancelled =
             (it->event.coopOnly && !twoPlayers) ||
-            (cost > 0
-                ? rockLoad + cost > rockCap
-                : alienLoad >= alienCap);
+            (cost > 0 ? rockLoad + cost > rockCap : alienLoad >= alienCap);
 
         if (cancelled) {
             if (!it->event.coopOnly) {
@@ -282,37 +244,26 @@ void WaveController::update(
             }
 
             if (cost > 0) {
-                const auto size =
-                    static_cast<AsteroidSize>(it->event.kind);
+                const auto size = static_cast<AsteroidSize>(it->event.kind);
 
-                auto asteroid =
-                    std::make_unique<Asteroid>(size);
+                auto asteroid = std::make_unique<Asteroid>(size);
 
                 asteroid->initShape(level);
                 asteroid->shape.setPosition(it->position);
 
                 asteroids.push_back(std::move(asteroid));
             } else {
-                const auto size =
-                    it->event.kind == Kind::BIG_ALIEN
-                        ? AlienSize::BIG
-                        : AlienSize::SMALL;
+                const auto size = it->event.kind == Kind::BIG_ALIEN
+                                      ? AlienSize::BIG
+                                      : AlienSize::SMALL;
 
                 aliens.push_back(
-                    std::make_unique<Alien>(
-                        size,
-                        level,
-                        it->position
-                    )
-                );
+                    std::make_unique<Alien>(size, level, it->position));
 
-                auto& audio =
-                    size == AlienSize::BIG ? sAlienB : sAlienS;
+                auto& audio = size == AlienSize::BIG ? sAlienB : sAlienS;
 
                 auto& timer =
-                    size == AlienSize::BIG
-                        ? alienBTimer
-                        : alienSTimer;
+                    size == AlienSize::BIG ? alienBTimer : alienSTimer;
 
                 audio.setLoop(true);
                 timer.restart();
@@ -340,8 +291,7 @@ void WaveController::update(
         }
     }
 
-    while (nextEvent < events.size() &&
-           events[nextEvent].at <= elapsed) {
+    while (nextEvent < events.size() && events[nextEvent].at <= elapsed) {
         const Event event = events[nextEvent];
 
         if (event.coopOnly && !twoPlayers) {
@@ -352,25 +302,20 @@ void WaveController::update(
         const int cost = weight(event.kind);
 
         const bool canSpawn =
-            cost > 0
-                ? rockLoad + cost <= rockCap
-                : alienLoad < alienCap;
+            cost > 0 ? rockLoad + cost <= rockCap : alienLoad < alienCap;
 
         sf::Vector2f position;
         bool found = false;
 
         if (canSpawn) {
-            for (int attempt = 0;
-                 attempt < 16 && !found;
-                 ++attempt) {
+            for (int attempt = 0; attempt < 16 && !found; ++attempt) {
                 position = edgePosition();
                 found = safe(position, players, first, end);
             }
         }
 
         if (!found) {
-            if (elapsed - event.at <
-                GameRules::SpawnRetrySeconds) {
+            if (elapsed - event.at < GameRules::SpawnRetrySeconds) {
                 break;
             }
 
@@ -379,11 +324,7 @@ void WaveController::update(
             continue;
         }
 
-        warnings.push_back({
-            event,
-            position,
-            GameRules::SpawnWarningSeconds
-        });
+        warnings.push_back({event, position, GameRules::SpawnWarningSeconds});
 
         if (cost > 0) {
             rockLoad += cost;
@@ -396,16 +337,12 @@ void WaveController::update(
 }
 
 int WaveController::finishFrame(bool worldEmpty) {
-    if (inRest ||
-        !worldEmpty ||
-        nextEvent != events.size() ||
+    if (inRest || !worldEmpty || nextEvent != events.size() ||
         !warnings.empty()) {
         return 0;
     }
 
-    bonus = allSpawnsDelivered
-        ? GameRules::clearBonus(secondsRemaining())
-        : 0;
+    bonus = allSpawnsDelivered ? GameRules::clearBonus(secondsRemaining()) : 0;
 
     inRest = true;
     restRemaining = GameRules::RestSeconds;
@@ -423,11 +360,9 @@ void WaveController::drawWarnings(sf::RenderWindow& window) const {
     for (const auto& warning : warnings) {
         marker.setPosition(warning.position);
 
-        marker.setOutlineColor(
-            weight(warning.event.kind) > 0
-                ? sf::Color(255, 190, 70)
-                : sf::Color(255, 90, 90)
-        );
+        marker.setOutlineColor(weight(warning.event.kind) > 0
+                                   ? sf::Color(255, 190, 70)
+                                   : sf::Color(255, 90, 90));
 
         window.draw(marker);
     }

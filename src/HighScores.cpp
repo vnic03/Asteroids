@@ -11,7 +11,7 @@
 #include <stdexcept>
 #include <utility>
 
-// Current release target: Linux.
+// Current release target: Linux and macOS.
 #include <fcntl.h>
 #include <sys/file.h>
 #include <unistd.h>
@@ -45,6 +45,11 @@ fs::path dataDirectory() {
         return custom;
     }
 
+#ifdef __APPLE__
+    if (const char* home = std::getenv("HOME"); home && *home) {
+        return fs::path(home) / "Library" / "Application Support" / "Asteroids";
+    }
+#else
     if (const char* xdg = std::getenv("XDG_DATA_HOME");
         xdg && *xdg && fs::path(xdg).is_absolute()) {
         return fs::path(xdg) / "asteroids";
@@ -53,6 +58,7 @@ fs::path dataDirectory() {
     if (const char* home = std::getenv("HOME"); home && *home) {
         return fs::path(home) / ".local" / "share" / "asteroids";
     }
+#endif
 
     throw std::runtime_error("Cannot determine user data directory");
 }

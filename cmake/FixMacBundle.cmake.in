@@ -1,0 +1,18 @@
+include(BundleUtilities)
+
+set(BU_CHMOD_BUNDLE_ITEMS ON)
+
+set(
+    app
+    "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/Asteroids.app"
+)
+
+if(NOT EXISTS "${app}")
+    message(FATAL_ERROR "App bundle not found: ${app}")
+endif()
+
+fixup_bundle(
+    "${app}"
+    ""
+    "@MACOS_DEPENDENCY_DIRS@"
+)

@@ -1,10 +1,16 @@
 #include <SFML/Audio.hpp>
 #include <SFML/Graphics.hpp>
 
+#include <cstdint>
 #include <cstdlib>
 #include <filesystem>
 #include <iostream>
+#include <stdexcept>
 #include <vector>
+
+#ifdef __APPLE__
+#include <mach-o/dyld.h>
+#endif
 
 #include "GameConstants.h"
 #include "HighScores.h"
@@ -29,16 +35,40 @@ namespace {
 
 fs::path assetRoot;
 
-fs::path findAssetRoot(const char* executableArgument) {
+fs::path executablePath(const char* executableArgument) {
     std::error_code error;
 
-    auto executable = fs::read_symlink("/proc/self/exe", error);
+#ifdef __APPLE__
+    std::vector<char> buffer(1024);
+    std::uint32_t size = static_cast<std::uint32_t>(buffer.size());
 
-    if (error) {
-        executable = fs::absolute(executableArgument);
+    if (_NSGetExecutablePath(buffer.data(), &size) != 0) {
+        buffer.resize(size);
+
+        if (_NSGetExecutablePath(buffer.data(), &size) != 0) {
+            throw std::runtime_error("Cannot determine executable path");
+        }
     }
 
-    const auto executableDirectory = executable.parent_path();
+    const fs::path executable(buffer.data());
+
+    auto resolved = fs::weakly_canonical(executable, error);
+
+    return error ? executable : resolved;
+#else
+    auto executable = fs::read_symlink("/proc/self/exe", error);
+
+    if (!error) {
+        return executable;
+    }
+
+    return fs::absolute(executableArgument);
+#endif
+}
+
+fs::path findAssetRoot(const char* executableArgument) {
+    const auto executableDirectory =
+        executablePath(executableArgument).parent_path();
 
     std::vector<fs::path> candidates;
 
@@ -46,6 +76,12 @@ fs::path findAssetRoot(const char* executableArgument) {
         custom && *custom) {
         candidates.emplace_back(custom);
     }
+
+#ifdef __APPLE__
+    // Asteroids.app/Contents/MacOS/Asteroids
+    // Assets: Contents/Resources/assets
+    candidates.push_back(executableDirectory / ".." / "Resources" / "assets");
+#endif
 
     candidates.push_back(executableDirectory / "assets");
 
@@ -55,7 +91,7 @@ fs::path findAssetRoot(const char* executableArgument) {
     candidates.push_back(fs::current_path() / "assets");
 
     for (const auto& candidate : candidates) {
-        error.clear();
+        std::error_code error;
 
         if (fs::is_directory(candidate, error)) {
             return candidate;

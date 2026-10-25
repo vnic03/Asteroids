@@ -69,8 +69,10 @@ jobs:
         run: |
           app="$PWD/stage/Asteroids.app"
 
-          # Sign binaries after dependency paths have been modified.
           while IFS= read -r -d '' item; do
+            if [[ "$item" == "$app/Contents/MacOS/Asteroids" ]]; then
+              continue
+            fi
             if /usr/bin/file -b "$item" | grep -q "Mach-O"; then
               /usr/bin/codesign \
                 --force \
@@ -91,6 +93,7 @@ jobs:
             find "$app" -depth -type d -name '*.framework' -print0
           )
 
+          # Sign the app and its main executable only after all nested code.
           /usr/bin/codesign \
             --force \
             --sign - \

@@ -55,8 +55,8 @@ jobs:
         run: |
           app="$PWD/stage/Asteroids.app"
 
-          lipo -verify_arch "${{ matrix.arch }}" \
-            "$app/Contents/MacOS/Asteroids"
+          lipo "$app/Contents/MacOS/Asteroids" \
+            -verify_arch "${{ matrix.arch }}"
 
           test -f "$app/Contents/Resources/assets/font/arcade-font.otf"
           test -f "$app/Contents/Resources/assets/sound/beat1.wav"
